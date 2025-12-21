@@ -35,9 +35,9 @@ final class InfluenceAnalysisServiceImplTest {
 
   @BeforeEach
   void setUp() {
-    when(config.getInfluence()).thenReturn(influenceConfig);
-    when(influenceConfig.getViewsWeight()).thenReturn(VIEWS_WEIGHT);
-    when(influenceConfig.getLikesWeight()).thenReturn(LIKES_WEIGHT);
+    when(config.influence()).thenReturn(influenceConfig);
+    when(influenceConfig.viewsWeight()).thenReturn(VIEWS_WEIGHT);
+    when(influenceConfig.likesWeight()).thenReturn(LIKES_WEIGHT);
 
     service = new InfluenceAnalysisServiceImpl(analyticsRepository, config);
   }

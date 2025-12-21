@@ -33,7 +33,7 @@ public class TedTalkServiceImpl implements TedTalkService {
     log.info("Created TED Talk: {}", saved.getTitle());
 
     return TedTalkResponse.fromEntity(
-        saved, config.getInfluence().getViewsWeight(), config.getInfluence().getLikesWeight());
+        saved, config.influence().viewsWeight(), config.influence().likesWeight());
   }
 
   @Override
@@ -52,7 +52,7 @@ public class TedTalkServiceImpl implements TedTalkService {
     log.info("Updated TED Talk: {}", updated.getId());
 
     return TedTalkResponse.fromEntity(
-        updated, config.getInfluence().getViewsWeight(), config.getInfluence().getLikesWeight());
+        updated, config.influence().viewsWeight(), config.influence().likesWeight());
   }
 
   @Override
@@ -70,7 +70,7 @@ public class TedTalkServiceImpl implements TedTalkService {
     TedTalkEntity entity = findEntityById(id);
 
     return TedTalkResponse.fromEntity(
-        entity, config.getInfluence().getViewsWeight(), config.getInfluence().getLikesWeight());
+        entity, config.influence().viewsWeight(), config.influence().likesWeight());
   }
 
   @Override
@@ -83,9 +83,7 @@ public class TedTalkServiceImpl implements TedTalkService {
         page.map(
                 entity ->
                     TedTalkResponse.fromEntity(
-                        entity,
-                        config.getInfluence().getViewsWeight(),
-                        config.getInfluence().getLikesWeight()))
+                        entity, config.influence().viewsWeight(), config.influence().likesWeight()))
             .getContent(),
         page);
   }

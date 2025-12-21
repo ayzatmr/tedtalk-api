@@ -109,7 +109,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
 
   public void processImport(String importId, Path csvFile) {
 
-    int batchSize = config.getCsv().getBatchSize();
+    int batchSize = config.csv().batchSize();
     List<TedTalkRequest> batch = new ArrayList<>(batchSize);
 
     try (BufferedReader reader =

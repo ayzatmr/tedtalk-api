@@ -66,9 +66,9 @@ final class TedTalkServiceImplTest {
   }
 
   private void mockInfluenceConfig() {
-    when(config.getInfluence()).thenReturn(influenceConfig);
-    when(influenceConfig.getViewsWeight()).thenReturn(VIEWS_WEIGHT);
-    when(influenceConfig.getLikesWeight()).thenReturn(LIKES_WEIGHT);
+    when(config.influence()).thenReturn(influenceConfig);
+    when(influenceConfig.viewsWeight()).thenReturn(VIEWS_WEIGHT);
+    when(influenceConfig.likesWeight()).thenReturn(LIKES_WEIGHT);
   }
 
   @Test

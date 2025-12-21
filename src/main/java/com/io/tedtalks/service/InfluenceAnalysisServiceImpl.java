@@ -26,8 +26,8 @@ public final class InfluenceAnalysisServiceImpl implements InfluenceAnalysisServ
   public InfluenceAnalysisServiceImpl(
       InfluenceAnalysisRepository analyticsRepository, TedTalksConfig config) {
     this.analyticsRepository = analyticsRepository;
-    this.viewsWeight = config.getInfluence().getViewsWeight();
-    this.likesWeight = config.getInfluence().getLikesWeight();
+    this.viewsWeight = config.influence().viewsWeight();
+    this.likesWeight = config.influence().likesWeight();
   }
 
   @Override
