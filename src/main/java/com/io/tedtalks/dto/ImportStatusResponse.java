@@ -14,21 +14,24 @@ import java.time.Instant;
 public record ImportStatusResponse(
     String importId, ImportStatus status, Instant startedAt, Instant completedAt) {
 
+  /**
+   * Converts an {@code ImportStatusEntity} to an {@code ImportStatusResponse}.
+   *
+   * @param entity the {@code ImportStatusEntity} instance to be converted
+   * @return a new instance of {@code ImportStatusResponse} constructed from the given entity
+   */
   public static ImportStatusResponse fromEntity(ImportStatusEntity entity) {
     return new ImportStatusResponse(
         entity.getImportId(),
-        ImportStatus.from(entity.getStatus()),
+        ImportStatus.valueOf(entity.getStatus().name()),
         entity.getStartedAt(),
         entity.getCompletedAt());
   }
 
+  /** Represents the status of an import process. */
   public enum ImportStatus {
     PROCESSING,
     COMPLETED,
-    FAILED;
-
-    public static ImportStatus from(ImportStatusEntity.ImportStatus status) {
-      return ImportStatus.valueOf(status.name());
-    }
+    FAILED
   }
 }

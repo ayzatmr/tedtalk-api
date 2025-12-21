@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/** Configuration class defining application-level beans for the TED Talks project. */
 @Configuration
 public class AppConfig {
 
@@ -20,11 +21,21 @@ public class AppConfig {
     return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("csv-import-", 0).factory());
   }
 
+  /**
+   * Provides a bean for obtaining the current instant with system precision.
+   *
+   * @return an {@code InstantSource} configured to use the system clock.
+   */
   @Bean
   public InstantSource instantSource() {
     return InstantSource.system();
   }
 
+  /**
+   * Provides an OpenAPI configuration bean for the TED Talk API.
+   *
+   * @return an {@code OpenAPI} instance containing metadata.
+   */
   @Bean
   public OpenAPI openAPI() {
     return new OpenAPI()

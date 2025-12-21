@@ -9,8 +9,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
- * Repository interface for managing persistent {@code TedTalkEntity} objects. Extends {@link
- * JpaRepository} to provide default CRUD and pagination operations.
+ * Repository interface for querying and persisting {@code TedTalkEntity} objects. This interface
+ * extends the {@code JpaRepository} to provide basic CRUD operations and additional query methods
+ * for filtering TED Talks based on specific criteria.
  */
 @Repository
 public interface TedTalkRepository extends JpaRepository<TedTalkEntity, Long> {

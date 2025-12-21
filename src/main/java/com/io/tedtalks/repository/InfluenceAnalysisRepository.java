@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
+/** Repository interface for managing influence analysis queries on TED Talks data. */
 @org.springframework.stereotype.Repository
 public interface InfluenceAnalysisRepository extends Repository<TedTalkEntity, Long> {
 

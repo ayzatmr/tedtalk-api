@@ -24,7 +24,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequestMapping("/api/v1/import")
 @RequiredArgsConstructor
 @Tag(name = "CSV Import", description = "CSV file import endpoints")
-public final class CsvImportController {
+public class CsvImportController {
 
   private final CsvImportService csvImportService;
 
