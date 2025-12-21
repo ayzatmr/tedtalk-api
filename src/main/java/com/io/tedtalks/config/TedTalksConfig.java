@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 /**
- * Configuration class for TED Talks application-specific properties. The properties are prefixed
+ * Configuration class for TED Talk application-specific properties. The properties are prefixed
  * with "tedtalks" in the application configuration.
  */
 @Component

@@ -30,7 +30,7 @@ public class AppConfig {
     return new OpenAPI()
         .info(
             new Info()
-                .title("TED Talks API")
+                .title("TED Talk API")
                 .version("1.0.0")
                 .description("API for managing and analyzing TED Talks"));
   }

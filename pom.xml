@@ -10,8 +10,7 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>TedTalks API</name>
-    <description>Knowledge Sharing Platform: TedTalks Edition</description>
+    <name>TedTalk API</name>
 
     <properties>
         <java.version>21</java.version>
