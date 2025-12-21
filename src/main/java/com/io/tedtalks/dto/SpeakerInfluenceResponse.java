@@ -14,4 +14,24 @@ public record SpeakerInfluenceResponse(
     long totalViews,
     long totalLikes,
     long talkCount,
-    List<TedTalkResponse> talks) {}
+    List<TedTalkResponse> talks) {
+
+  /**
+   * Creates an instance of {@code SpeakerInfluenceResponse} from a given {@code
+   * SpeakerInfluenceDto}.
+   *
+   * @param dto The {@code SpeakerInfluenceDto} containing the aggregated influence metrics of a
+   *     speaker.
+   * @return A new {@code SpeakerInfluenceResponse} instance populated with the data from the
+   *     provided DTO.
+   */
+  public static SpeakerInfluenceResponse fromDto(SpeakerInfluenceDto dto) {
+    return new SpeakerInfluenceResponse(
+        dto.getAuthor(),
+        dto.getTotalInfluence(),
+        dto.getTotalViews(),
+        dto.getTotalLikes(),
+        dto.getTalkCount(),
+        List.of());
+  }
+}

@@ -15,6 +15,23 @@ public record TedTalkResponse(
     String link,
     double influenceScore) {
 
+  /**
+   * Converts an {@link InfluentialTalkDto} instance into a {@link TedTalkResponse} instance.
+   *
+   * @param dto the {@code InfluentialTalkDto} to be converted. Must not be null.
+   * @return a {@code TedTalkResponse} instance containing the data from the given DTO.
+   */
+  public static TedTalkResponse fromDto(InfluentialTalkDto dto) {
+    return new TedTalkResponse(
+        dto.getId(),
+        dto.getTitle(),
+        dto.getAuthor(),
+        YearMonth.of(dto.getYearValue(), dto.getMonthValue()),
+        dto.getViews(),
+        dto.getLikes(),
+        dto.getLink(),
+        dto.getInfluence());
+  }
 
   /**
    * Converts a {@link TedTalkEntity} instance into a {@link TedTalkResponse} instance and includes
