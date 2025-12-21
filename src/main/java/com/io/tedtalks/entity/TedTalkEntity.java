@@ -1,5 +1,6 @@
 package com.io.tedtalks.entity;
 
+import com.io.tedtalks.dto.TedTalkRequest;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,6 +10,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.YearMonth;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -53,6 +55,82 @@ public class TedTalkEntity {
 
   @Column(nullable = false)
   private String link;
+
+  /**
+   * Calculates the influence of a TED Talk based on its views and likes, weighted by the given
+   * factors.
+   *
+   * @param viewsWeight the weight to apply to the number of views
+   * @param likesWeight the weight to apply to the number of likes
+   * @return the calculated influence as a double value
+   */
+  public double calculateInfluence(double viewsWeight, double likesWeight) {
+    return (views * viewsWeight) + (likes * likesWeight);
+  }
+
+  /**
+   * Retrieves the year and month of the TED Talk as a {@code YearMonth} instance.
+   *
+   * @return a {@code YearMonth} representing the year and month of the TED Talk
+   */
+  public YearMonth getYearMonth() {
+    return YearMonth.of(year, month);
+  }
+
+  /**
+   * Sets the year and month of the TED Talk entity based on the provided {@code YearMonth}
+   * instance.
+   *
+   * @param yearMonth the {@code YearMonth} representing the year and month to set; must not be null
+   */
+  public void setYearMonth(YearMonth yearMonth) {
+    this.year = yearMonth.getYear();
+    this.month = yearMonth.getMonthValue();
+  }
+
+  /**
+   * Creates a new instance of {@code TedTalkEntity} based on the properties of the provided {@code
+   * TedTalkRequest}.
+   *
+   * @param request the {@code TedTalkRequest} containing the data required to create the entity
+   * @return a newly created {@code TedTalkEntity} populated with the values from the provided
+   *     request
+   */
+  public static TedTalkEntity of(TedTalkRequest request) {
+    return of(
+        request.title(),
+        request.author(),
+        request.date(),
+        request.views(),
+        request.likes(),
+        request.link());
+  }
+
+  /**
+   * Creates a new instance of {@code TedTalkEntity} based on the specified properties.
+   *
+   * @param title the title of the TED Talk; must not be null or blank
+   * @param author the author or speaker of the TED Talk; must not be null or blank
+   * @param yearMonth the year and month when the TED Talk was presented; must not be null
+   * @param views the number of views the TED Talk has received; must be non-negative
+   * @param likes the number of likes the TED Talk has received; must be non-negative
+   * @param link the link to the TED Talk; must not be null or blank
+   * @return a new {@code TedTalkEntity} instance populated with the specified properties
+   */
+  public static TedTalkEntity of(
+      String title, String author, YearMonth yearMonth, long views, long likes, String link) {
+
+    TedTalkEntity entity = new TedTalkEntity();
+    entity.title = title.trim();
+    entity.author = author.trim();
+    entity.year = yearMonth.getYear();
+    entity.month = yearMonth.getMonthValue();
+    entity.views = Math.max(0, views);
+    entity.likes = Math.max(0, likes);
+    entity.link = link.trim();
+
+    return entity;
+  }
 
   @PrePersist
   @PreUpdate
