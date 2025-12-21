@@ -12,13 +12,12 @@ import org.springframework.context.annotation.Configuration;
 public class AppConfig {
 
   /**
-   * Virtual-thread executor with bounded queue. Limits concurrent imports to prevent
-   * database contention. Automatically shut down by Spring on context close.
+   * Virtual-thread executor with bounded queue. Limits concurrent imports to prevent database
+   * contention. Automatically shut down by Spring on context close.
    */
   @Bean(name = "csvImportExecutor", destroyMethod = "shutdown")
   public ExecutorService csvImportExecutor() {
-    return Executors.newThreadPerTaskExecutor(
-        Thread.ofVirtual().name("csv-import-", 0).factory());
+    return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("csv-import-", 0).factory());
   }
 
   @Bean

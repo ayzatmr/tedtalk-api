@@ -23,6 +23,18 @@ class InfluenceAnalysisRepositoryTest {
 
   @Autowired private TedTalkRepository tedTalkRepository;
 
+  private static TedTalkEntity talk(
+      String title, String author, int year, int month, int views, int likes) {
+
+    return TedTalkEntity.of(
+        title,
+        author,
+        YearMonth.of(year, month),
+        views,
+        likes,
+        "http://test.com/" + title.replace(" ", "-"));
+  }
+
   @Test
   void findMostInfluentialTalks_shouldReturnOrderedByInfluence() {
     tedTalkRepository.save(talk("Talk 1", "John Doe", 2020, 1, 1000, 100));
@@ -115,17 +127,5 @@ class InfluenceAnalysisRepositoryTest {
         repository.findMostInfluentialTalkPerYear(VIEW_WEIGHT, LIKE_WEIGHT);
 
     assertTrue(result.isEmpty());
-  }
-
-  private static TedTalkEntity talk(
-      String title, String author, int year, int month, int views, int likes) {
-
-    return TedTalkEntity.of(
-        title,
-        author,
-        YearMonth.of(year, month),
-        views,
-        likes,
-        "http://test.com/" + title.replace(" ", "-"));
   }
 }

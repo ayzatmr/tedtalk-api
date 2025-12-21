@@ -27,20 +27,20 @@ public interface InfluenceAnalysisRepository extends Repository<TedTalkEntity, L
   @Query(
       value =
           """
-                    SELECT
-                      id,
-                      title,
-                      author,
-                      year_value  AS yearValue,
-                      month_value AS monthValue,
-                      views,
-                      likes,
-                      link,
-                      (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS influence
-                    FROM ted_talks
-                    ORDER BY (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) DESC
-                    LIMIT :limit
-                    """,
+          SELECT
+            id,
+            title,
+            author,
+            year_value  AS yearValue,
+            month_value AS monthValue,
+            views,
+            likes,
+            link,
+            (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS influence
+          FROM ted_talks
+          ORDER BY (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) DESC
+          LIMIT :limit
+          """,
       nativeQuery = true)
   List<InfluentialTalkDto> findMostInfluentialTalks(
       @Param("viewsWeight") double viewsWeight,
@@ -62,25 +62,25 @@ public interface InfluenceAnalysisRepository extends Repository<TedTalkEntity, L
   @Query(
       value =
           """
-                          SELECT
-                            author,
-                            totalViews,
-                            totalLikes,
-                            totalInfluence,
-                            talkCount
-                          FROM (
-                            SELECT
-                              author,
-                              SUM(views) AS totalViews,
-                              SUM(likes) AS totalLikes,
-                              SUM(CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS totalInfluence,
-                              COUNT(*) AS talkCount
-                            FROM ted_talks
-                            GROUP BY author
-                          )
-                          ORDER BY totalInfluence DESC
-                          LIMIT :limit
-                    """,
+                SELECT
+                  author,
+                  totalViews,
+                  totalLikes,
+                  totalInfluence,
+                  talkCount
+                FROM (
+                  SELECT
+                    author,
+                    SUM(views) AS totalViews,
+                    SUM(likes) AS totalLikes,
+                    SUM(CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS totalInfluence,
+                    COUNT(*) AS talkCount
+                  FROM ted_talks
+                  GROUP BY author
+                )
+                ORDER BY totalInfluence DESC
+                LIMIT :limit
+          """,
       nativeQuery = true)
   List<SpeakerInfluenceDto> findMostInfluentialSpeakers(
       @Param("viewsWeight") double viewsWeight,
@@ -101,16 +101,16 @@ public interface InfluenceAnalysisRepository extends Repository<TedTalkEntity, L
   @Query(
       value =
           """
-                    SELECT
-                      author,
-                      SUM(views) AS totalViews,
-                      SUM(likes) AS totalLikes,
-                      SUM(CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS totalInfluence,
-                      COUNT(*) AS talkCount
-                    FROM ted_talks
-                    WHERE LOWER(author) = LOWER(:author)
-                    GROUP BY author
-                    """,
+          SELECT
+            author,
+            SUM(views) AS totalViews,
+            SUM(likes) AS totalLikes,
+            SUM(CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS totalInfluence,
+            COUNT(*) AS talkCount
+          FROM ted_talks
+          WHERE LOWER(author) = LOWER(:author)
+          GROUP BY author
+          """,
       nativeQuery = true)
   Optional<SpeakerInfluenceDto> findSpeakerInfluence(
       @Param("author") String author,
@@ -129,36 +129,36 @@ public interface InfluenceAnalysisRepository extends Repository<TedTalkEntity, L
   @Query(
       value =
           """
-                      SELECT
-                        id,
-                        title,
-                        author,
-                        yearValue,
-                        monthValue,
-                        views,
-                        likes,
-                        link,
-                        influence
-                      FROM (
-                        SELECT
-                          id,
-                          title,
-                          author,
-                          year_value  AS yearValue,
-                          month_value AS monthValue,
-                          views,
-                          likes,
-                          link,
-                          (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS influence,
-                          ROW_NUMBER() OVER (
-                            PARTITION BY year_value
-                            ORDER BY (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) DESC
-                          ) AS rn
-                        FROM ted_talks
-                      )
-                      WHERE rn = 1
-                      ORDER BY yearValue
-                    """,
+            SELECT
+              id,
+              title,
+              author,
+              yearValue,
+              monthValue,
+              views,
+              likes,
+              link,
+              influence
+            FROM (
+              SELECT
+                id,
+                title,
+                author,
+                year_value  AS yearValue,
+                month_value AS monthValue,
+                views,
+                likes,
+                link,
+                (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS influence,
+                ROW_NUMBER() OVER (
+                  PARTITION BY year_value
+                  ORDER BY (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) DESC
+                ) AS rn
+              FROM ted_talks
+            )
+            WHERE rn = 1
+            ORDER BY yearValue
+          """,
       nativeQuery = true)
   List<InfluentialTalkDto> findMostInfluentialTalkPerYear(
       @Param("viewsWeight") double viewsWeight, @Param("likesWeight") double likesWeight);

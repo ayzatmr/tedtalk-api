@@ -57,38 +57,6 @@ public class TedTalkEntity {
   private String link;
 
   /**
-   * Calculates the influence of a TED Talk based on its views and likes, weighted by the given
-   * factors.
-   *
-   * @param viewsWeight the weight to apply to the number of views
-   * @param likesWeight the weight to apply to the number of likes
-   * @return the calculated influence as a double value
-   */
-  public double calculateInfluence(double viewsWeight, double likesWeight) {
-    return (views * viewsWeight) + (likes * likesWeight);
-  }
-
-  /**
-   * Retrieves the year and month of the TED Talk as a {@code YearMonth} instance.
-   *
-   * @return a {@code YearMonth} representing the year and month of the TED Talk
-   */
-  public YearMonth getYearMonth() {
-    return YearMonth.of(year, month);
-  }
-
-  /**
-   * Sets the year and month of the TED Talk entity based on the provided {@code YearMonth}
-   * instance.
-   *
-   * @param yearMonth the {@code YearMonth} representing the year and month to set; must not be null
-   */
-  public void setYearMonth(YearMonth yearMonth) {
-    this.year = yearMonth.getYear();
-    this.month = yearMonth.getMonthValue();
-  }
-
-  /**
    * Creates a new instance of {@code TedTalkEntity} based on the properties of the provided {@code
    * TedTalkRequest}.
    *
@@ -130,6 +98,38 @@ public class TedTalkEntity {
     entity.link = link.trim();
 
     return entity;
+  }
+
+  /**
+   * Calculates the influence of a TED Talk based on its views and likes, weighted by the given
+   * factors.
+   *
+   * @param viewsWeight the weight to apply to the number of views
+   * @param likesWeight the weight to apply to the number of likes
+   * @return the calculated influence as a double value
+   */
+  public double calculateInfluence(double viewsWeight, double likesWeight) {
+    return (views * viewsWeight) + (likes * likesWeight);
+  }
+
+  /**
+   * Retrieves the year and month of the TED Talk as a {@code YearMonth} instance.
+   *
+   * @return a {@code YearMonth} representing the year and month of the TED Talk
+   */
+  public YearMonth getYearMonth() {
+    return YearMonth.of(year, month);
+  }
+
+  /**
+   * Sets the year and month of the TED Talk entity based on the provided {@code YearMonth}
+   * instance.
+   *
+   * @param yearMonth the {@code YearMonth} representing the year and month to set; must not be null
+   */
+  public void setYearMonth(YearMonth yearMonth) {
+    this.year = yearMonth.getYear();
+    this.month = yearMonth.getMonthValue();
   }
 
   @PrePersist

@@ -47,7 +47,6 @@ final class CsvImportControllerTest {
         .andExpect(jsonPath("$.statusUrl").isNotEmpty());
   }
 
-
   @Test
   void getImportStatus_shouldReturnStatus() throws Exception {
     String importId = "test-import-id";

@@ -14,9 +14,19 @@ import org.springframework.data.domain.PageRequest;
 @DataJpaTest
 class TedTalkRepositoryTest {
 
+  private static final PageRequest PAGE = PageRequest.of(0, 10);
   @Autowired private TedTalkRepository repository;
 
-  private static final PageRequest PAGE = PageRequest.of(0, 10);
+  private static TedTalkEntity talk(String title, String author, int year) {
+
+    return TedTalkEntity.of(
+        title,
+        author,
+        YearMonth.of(year, 1),
+        1000,
+        100,
+        "http://test.com/" + title.replace(" ", "-"));
+  }
 
   @Test
   void findByFilters_shouldReturnAllWhenNoFilters() {
@@ -77,16 +87,5 @@ class TedTalkRepositoryTest {
     Page<TedTalkEntity> result = repository.findByFilters("Unknown", null, null, PAGE);
 
     assertTrue(result.isEmpty());
-  }
-
-  private static TedTalkEntity talk(String title, String author, int year) {
-
-    return TedTalkEntity.of(
-        title,
-        author,
-        YearMonth.of(year, 1),
-        1000,
-        100,
-        "http://test.com/" + title.replace(" ", "-"));
   }
 }

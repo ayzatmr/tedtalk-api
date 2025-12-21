@@ -30,6 +30,15 @@ final class InfluenceAnalysisControllerTest {
 
   @MockitoBean private InstantSource instantSource;
 
+  private static SpeakerInfluenceResponse speakerResponse() {
+    return new SpeakerInfluenceResponse("John Doe", 1000.0, 5000, 500, 3, List.of());
+  }
+
+  private static TedTalkResponse talkResponse() {
+    return new TedTalkResponse(
+        1L, "Test Talk", "John Doe", YearMonth.of(2020, 1), 1000, 100, "http://test.com", 800.0);
+  }
+
   @Test
   void getMostInfluentialSpeakers_shouldReturnList() throws Exception {
     when(influenceAnalysisService.getMostInfluentialSpeakers(5))
@@ -87,15 +96,5 @@ final class InfluenceAnalysisControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].year").value(2020))
         .andExpect(jsonPath("$[0].mostInfluentialTalk.title").value("Test Talk"));
-  }
-
-
-  private static SpeakerInfluenceResponse speakerResponse() {
-    return new SpeakerInfluenceResponse("John Doe", 1000.0, 5000, 500, 3, List.of());
-  }
-
-  private static TedTalkResponse talkResponse() {
-    return new TedTalkResponse(
-        1L, "Test Talk", "John Doe", YearMonth.of(2020, 1), 1000, 100, "http://test.com", 800.0);
   }
 }

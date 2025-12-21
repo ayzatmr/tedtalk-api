@@ -38,6 +38,28 @@ final class TedTalkServiceImplTest {
 
   private TedTalkServiceImpl service;
 
+  private static TedTalkRequest request(String title, String author, int year, int month) {
+
+    return new TedTalkRequest(
+        title,
+        author,
+        YearMonth.of(year, month),
+        1000,
+        100,
+        "http://test.com/" + title.replace(" ", "-"));
+  }
+
+  private static TedTalkEntity entity(String title) {
+
+    return TedTalkEntity.of(
+        title,
+        "John Doe",
+        YearMonth.of(2020, 1),
+        1000,
+        100,
+        "http://test.com/" + title.replace(" ", "-"));
+  }
+
   @BeforeEach
   void setUp() {
     service = new TedTalkServiceImpl(repository, config);
@@ -136,27 +158,5 @@ final class TedTalkServiceImplTest {
 
     assertEquals(1, response.rows().size());
     assertEquals("Test Talk", response.rows().get(0).title());
-  }
-
-  private static TedTalkRequest request(String title, String author, int year, int month) {
-
-    return new TedTalkRequest(
-        title,
-        author,
-        YearMonth.of(year, month),
-        1000,
-        100,
-        "http://test.com/" + title.replace(" ", "-"));
-  }
-
-  private static TedTalkEntity entity(String title) {
-
-    return TedTalkEntity.of(
-        title,
-            "John Doe",
-        YearMonth.of(2020, 1),
-        1000,
-        100,
-        "http://test.com/" + title.replace(" ", "-"));
   }
 }

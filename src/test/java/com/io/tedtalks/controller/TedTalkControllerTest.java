@@ -40,6 +40,16 @@ final class TedTalkControllerTest {
 
   @MockitoBean private InstantSource instantSource;
 
+  private static TedTalkRequest createRequest() {
+    return new TedTalkRequest(
+        "Test Talk", "John Doe", YearMonth.of(2020, 1), 1000, 100, "http://test.com");
+  }
+
+  private static TedTalkResponse createResponse() {
+    return new TedTalkResponse(
+        1L, "Test Talk", "John Doe", YearMonth.of(2020, 1), 1000, 100, "http://test.com", 800.0);
+  }
+
   @Test
   void createTalk_shouldReturnCreated() throws Exception {
     TedTalkRequest request = createRequest();
@@ -121,15 +131,5 @@ final class TedTalkControllerTest {
     doNothing().when(tedTalkService).deleteTalk(1L);
 
     mockMvc.perform(delete(BASE_URL + "/{id}", 1L)).andExpect(status().isNoContent());
-  }
-
-  private static TedTalkRequest createRequest() {
-    return new TedTalkRequest(
-        "Test Talk", "John Doe", YearMonth.of(2020, 1), 1000, 100, "http://test.com");
-  }
-
-  private static TedTalkResponse createResponse() {
-    return new TedTalkResponse(
-        1L, "Test Talk", "John Doe", YearMonth.of(2020, 1), 1000, 100, "http://test.com", 800.0);
   }
 }
