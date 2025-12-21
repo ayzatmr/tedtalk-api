@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
+import java.time.InstantSource;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,6 +32,44 @@ public class ImportStatusEntity {
   private Instant completedAt;
 
   @Version private long version;
+
+  private ImportStatusEntity(String importId, Instant startedAt) {
+    this.importId = importId;
+    this.status = ImportStatus.PROCESSING;
+    this.startedAt = startedAt;
+  }
+
+  /**
+   * Creates and returns a new {@code ImportStatusEntity} instance with the given import ID and the
+   * current time as the start time.
+   *
+   * @param importId the unique identifier for the import process
+   * @param clock the source of the current time used to record the start time
+   * @return a new instance of {@code ImportStatusEntity}
+   */
+  public static ImportStatusEntity start(String importId, InstantSource clock) {
+    return new ImportStatusEntity(importId, clock.instant());
+  }
+
+  /**
+   * Marks the current import process as completed and records the completion time.
+   *
+   * @param clock the source of the current time used to set the completion timestamp
+   */
+  public void markCompleted(InstantSource clock) {
+    this.status = ImportStatus.COMPLETED;
+    this.completedAt = clock.instant();
+  }
+
+  /**
+   * Marks the current import process as failed and records the failure time.
+   *
+   * @param clock the source of the current time used to set the failure timestamp
+   */
+  public void markFailed(InstantSource clock) {
+    this.status = ImportStatus.FAILED;
+    this.completedAt = clock.instant();
+  }
 
   /**
    * Represents the various states of an import process within the system.
