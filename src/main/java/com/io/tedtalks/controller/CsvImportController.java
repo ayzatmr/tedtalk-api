@@ -27,4 +27,34 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public final class CsvImportController {
 
   private final CsvImportService csvImportService;
+
+  /**
+   * Initiates the import process for a TED Talks CSV file.
+   *
+   * @param file the CSV file to be imported
+   */
+  @PostMapping(value = "/csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @ResponseStatus(HttpStatus.ACCEPTED)
+  @Operation(summary = "Import TED Talks from CSV file")
+  public ImportInitResponse importCsv(
+      @Parameter(description = "CSV file to import") @RequestParam("file") MultipartFile file) {
+    String importId = csvImportService.startImport(file);
+    String statusUrl =
+        ServletUriComponentsBuilder.fromCurrentContextPath()
+            .path("/api/v1/import/status/{importId}")
+            .buildAndExpand(importId)
+            .toUriString();
+    return ImportInitResponse.of(importId, statusUrl);
+  }
+
+  /**
+   * Retrieves the status of a CSV file import process by its unique import ID.
+   *
+   * @param importId the unique identifier of the import process
+   */
+  @GetMapping("/status/{importId}")
+  @Operation(summary = "Get import status by ID")
+  public ImportStatusResponse getImportStatus(@PathVariable String importId) {
+    return csvImportService.getImportStatus(importId);
+  }
 }
