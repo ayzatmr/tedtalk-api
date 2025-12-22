@@ -9,7 +9,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -65,15 +68,28 @@ public class TedTalkController {
   @GetMapping
   @Operation(summary = "Get TED Talks with optional filters (combined with AND)")
   public PagedResponse<TedTalkResponse> getTalks(
-      @Parameter(description = "Filter by author name") @RequestParam(required = false)
+      @Parameter(description = "Filter by author name")
+          @RequestParam(required = false)
+          @Size(max = 255)
           String author,
-      @Parameter(description = "Filter by year") @RequestParam(required = false) Integer year,
-      @Parameter(description = "Search keyword in title and author") @RequestParam(required = false)
+      @Parameter(description = "Filter by year")
+          @RequestParam(required = false)
+          @Min(1500)
+          @Max(2100)
+          Integer year,
+      @Parameter(description = "Search keyword in title and author")
+          @RequestParam(required = false)
+          @Size(max = 255)
           String keyword,
-      @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int page,
-      @Parameter(description = "Page size (max 100)") @RequestParam(defaultValue = "100") int size,
+      @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
+      @Parameter(description = "Page size (max 100)")
+          @RequestParam(defaultValue = "100")
+          @Min(1)
+          @Max(1000)
+          int size,
       @Parameter(description = "Sort field (e.g., title, author, views, likes, year)")
           @RequestParam(defaultValue = "id")
+          @Pattern(regexp = "id|title|author|views|likes|year", message = "Invalid sort field")
           String sortBy,
       @Parameter(description = "Sort direction") @RequestParam(defaultValue = "ASC")
           Sort.Direction sortDirection) {

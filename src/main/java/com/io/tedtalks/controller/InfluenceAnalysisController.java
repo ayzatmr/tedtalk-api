@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -54,7 +55,7 @@ public class InfluenceAnalysisController {
   @GetMapping("/speaker")
   @Operation(summary = "Get specific speaker's influence")
   public SpeakerInfluenceResponse getSpeakerInfluence(
-      @Parameter(description = "Author name") @RequestParam String author) {
+      @Parameter(description = "Author name") @RequestParam @NotBlank String author) {
     return influenceAnalysisService
         .getSpeakerInfluence(author)
         .orElseThrow(() -> new ResourceNotFoundException("Speaker not found: " + author));

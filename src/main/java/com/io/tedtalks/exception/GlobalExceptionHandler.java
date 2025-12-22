@@ -1,6 +1,7 @@
 package com.io.tedtalks.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.List;
@@ -46,7 +47,7 @@ public final class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             instantSource.instant(),
-            HttpStatus.NOT_FOUND.value(),
+            HttpStatus.NOT_FOUND,
             "Not Found",
             ex.getMessage(),
             request.getRequestURI());
@@ -73,7 +74,7 @@ public final class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             instantSource.instant(),
-            HttpStatus.BAD_REQUEST.value(),
+            HttpStatus.BAD_REQUEST,
             "CSV Import Error",
             ex.getMessage(),
             request.getRequestURI());
@@ -104,7 +105,7 @@ public final class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             instantSource.instant(),
-            HttpStatus.BAD_REQUEST.value(),
+            HttpStatus.BAD_REQUEST,
             "Validation Error",
             "Invalid request parameters",
             request.getRequestURI(),
@@ -139,7 +140,7 @@ public final class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             instantSource.instant(),
-            HttpStatus.BAD_REQUEST.value(),
+            HttpStatus.BAD_REQUEST,
             "Bad Request",
             message,
             request.getRequestURI());
@@ -166,12 +167,34 @@ public final class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             instantSource.instant(),
-            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            HttpStatus.INTERNAL_SERVER_ERROR,
             "Internal Server Error",
             "An unexpected error occurred",
             request.getRequestURI());
 
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ErrorResponse> handleConstraintViolation(
+      ConstraintViolationException ex, HttpServletRequest request) {
+
+    List<String> details =
+        ex.getConstraintViolations().stream()
+            .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+            .sorted()
+            .toList();
+
+    ErrorResponse error =
+        new ErrorResponse(
+            instantSource.instant(),
+            HttpStatus.BAD_REQUEST,
+            "Bad Request",
+            "Invalid request parameters",
+            request.getRequestURI(),
+            details);
+
+    return ResponseEntity.badRequest().body(error);
   }
 
   /**
@@ -181,13 +204,14 @@ public final class GlobalExceptionHandler {
    */
   public record ErrorResponse(
       Instant timestamp,
-      int status,
+      HttpStatus status,
       String error,
       String message,
       String path,
       List<String> details) {
 
-    public ErrorResponse(Instant timestamp, int status, String error, String message, String path) {
+    public ErrorResponse(
+        Instant timestamp, HttpStatus status, String error, String message, String path) {
       this(timestamp, status, error, message, path, null);
     }
   }
