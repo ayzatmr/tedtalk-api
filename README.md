@@ -170,7 +170,6 @@ Supported date formats:
 
 * `January 2024`
 * `Jan 2024`
-* `2024-03`
 
 ---
 
