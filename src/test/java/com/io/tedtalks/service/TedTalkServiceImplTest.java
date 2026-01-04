@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -94,12 +95,14 @@ final class TedTalkServiceImplTest {
     TedTalkEntity entity = entity("Old Talk");
 
     when(repository.findById(1L)).thenReturn(Optional.of(entity));
-    when(repository.save(any(TedTalkEntity.class))).thenReturn(entity);
 
     TedTalkResponse response = service.updateTalk(1L, request);
 
     assertNotNull(response);
-    verify(repository).save(any(TedTalkEntity.class));
+    assertEquals("Updated Talk", response.title());
+
+    verify(repository).findById(1L);
+    verify(repository, never()).save(any());
   }
 
   @Test

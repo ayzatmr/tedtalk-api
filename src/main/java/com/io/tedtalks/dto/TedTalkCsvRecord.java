@@ -1,7 +1,7 @@
 package com.io.tedtalks.dto;
 
 import com.opencsv.bean.CsvBindByName;
-import lombok.Data;
+import lombok.Getter;
 
 /**
  * Represents a single record of TED Talk data, typically parsed from a CSV file.
@@ -10,7 +10,7 @@ import lombok.Data;
  * the respective fields in the object. Some fields are required based on the `@CsvBindByName`
  * annotations.
  */
-@Data
+@Getter
 public class TedTalkCsvRecord {
 
   @CsvBindByName(column = "title", required = true)
