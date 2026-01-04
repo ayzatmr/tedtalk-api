@@ -14,7 +14,6 @@ import java.time.YearMonth;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /** Represents a TED Talk entity in the system. */
 @Entity
@@ -27,7 +26,6 @@ import lombok.Setter;
       @Index(name = "idx_likes", columnList = "likes")
     })
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TedTalkEntity {
 
@@ -130,6 +128,28 @@ public class TedTalkEntity {
   public void setYearMonth(YearMonth yearMonth) {
     this.year = yearMonth.getYear();
     this.month = yearMonth.getMonthValue();
+  }
+
+  /**
+   * Updates the properties of this {@code TedTalkEntity} with the values from the provided {@code
+   * TedTalkRequest}. The request must not be null. Trims leading and trailing whitespace from
+   * string values and directly sets numeric values.
+   *
+   * @param request the {@code TedTalkRequest} containing the updated data for the TED Talk entity;
+   *     must not be null
+   * @throws IllegalArgumentException if the provided request is null
+   */
+  public void updateFrom(TedTalkRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("Request must not be null");
+    }
+
+    this.title = request.title().trim();
+    this.author = request.author().trim();
+    setYearMonth(request.date());
+    this.views = request.views();
+    this.likes = request.likes();
+    this.link = request.link().trim();
   }
 
   @PrePersist

@@ -24,7 +24,7 @@ public record PagedResponse<T>(List<T> rows, PageMetadata metadata) {
     return new PagedResponse<>(List.copyOf(content), PageMetadata.from(page));
   }
 
-  public record PageMetadata(
+  record PageMetadata(
       int page,
       int size,
       long totalElements,
@@ -40,7 +40,7 @@ public record PagedResponse<T>(List<T> rows, PageMetadata metadata) {
      * @param page the {@code Page} object containing details about the current page.
      * @return a {@code PageMetadata} instance representing the metadata of the given page.
      */
-    public static PageMetadata from(Page<?> page) {
+    static PageMetadata from(Page<?> page) {
       return new PageMetadata(
           page.getNumber(),
           page.getSize(),

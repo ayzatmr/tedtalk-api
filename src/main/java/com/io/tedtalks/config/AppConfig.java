@@ -49,7 +49,7 @@ public class AppConfig {
   }
 
   /**
-   * Provides a bean for obtaining the current instant with system precision.
+   * Provides a bean for getting the current instant with system precision.
    *
    * @return an {@code InstantSource} configured to use the system clock.
    */

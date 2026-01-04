@@ -28,6 +28,7 @@ public class TedTalkServiceImpl implements TedTalkService {
   private final TedTalksConfig config;
 
   @Override
+  @Transactional
   public TedTalkResponse createTalk(TedTalkRequest request) {
     TedTalkEntity saved = repository.save(TedTalkEntity.of(request));
     log.info("Created TED Talk: {}", saved.getTitle());
@@ -41,18 +42,10 @@ public class TedTalkServiceImpl implements TedTalkService {
   public TedTalkResponse updateTalk(Long id, TedTalkRequest request) {
     TedTalkEntity entity = findEntityById(id);
 
-    entity.setTitle(request.title());
-    entity.setAuthor(request.author());
-    entity.setYearMonth(request.date());
-    entity.setViews(request.views());
-    entity.setLikes(request.likes());
-    entity.setLink(request.link());
-
-    TedTalkEntity updated = repository.save(entity);
-    log.info("Updated TED Talk: {}", updated.getId());
-
+    entity.updateFrom(request);
+    log.info("Updated TED Talk: {}", entity.getId());
     return TedTalkResponse.fromEntity(
-        updated, config.influence().viewsWeight(), config.influence().likesWeight());
+        entity, config.influence().viewsWeight(), config.influence().likesWeight());
   }
 
   @Override
