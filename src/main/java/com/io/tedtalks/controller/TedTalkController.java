@@ -82,10 +82,10 @@ public class TedTalkController {
           @Size(max = 255)
           String keyword,
       @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
-      @Parameter(description = "Page size (max 100)")
+      @Parameter(description = "Page size")
           @RequestParam(defaultValue = "100")
           @Min(1)
-          @Max(1000)
+          @Max(100)
           int size,
       @Parameter(description = "Sort field (e.g., title, author, views, likes, year)")
           @RequestParam(defaultValue = "id")

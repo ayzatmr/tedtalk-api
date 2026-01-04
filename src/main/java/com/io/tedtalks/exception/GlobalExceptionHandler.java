@@ -46,6 +46,7 @@ public final class GlobalExceptionHandler extends ResponseEntityExceptionHandler
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
 
+    problemDetail.setType(ProblemType.RESOURCE_NOT_FOUND.toUri());
     problemDetail.setTitle("Resource Not Found");
     problemDetail.setInstance(URI.create(request.getRequestURI()));
 
@@ -68,6 +69,7 @@ public final class GlobalExceptionHandler extends ResponseEntityExceptionHandler
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
 
+    problemDetail.setType(ProblemType.CSV_IMPORT_ERROR.toUri());
     problemDetail.setTitle("CSV Import Error");
     problemDetail.setInstance(URI.create(request.getRequestURI()));
 
@@ -92,6 +94,7 @@ public final class GlobalExceptionHandler extends ResponseEntityExceptionHandler
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
 
+    problemDetail.setType(ProblemType.TOO_MANY_IMPORTS.toUri());
     problemDetail.setTitle("Too Many Concurrent Imports");
     problemDetail.setInstance(URI.create(request.getRequestURI()));
     problemDetail.setProperty("retryAfterSeconds", 120);
@@ -124,6 +127,7 @@ public final class GlobalExceptionHandler extends ResponseEntityExceptionHandler
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid request parameters");
 
+    problemDetail.setType(ProblemType.CONSTRAINT_VIOLATION.toUri());
     problemDetail.setTitle("Constraint Violation");
     problemDetail.setInstance(URI.create(request.getRequestURI()));
     problemDetail.setProperty("violations", violations);
@@ -160,6 +164,7 @@ public final class GlobalExceptionHandler extends ResponseEntityExceptionHandler
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid request parameters");
 
+    problemDetail.setType(ProblemType.VALIDATION_ERROR.toUri());
     problemDetail.setTitle("Validation Error");
     problemDetail.setProperty("errors", errors);
 
@@ -186,6 +191,7 @@ public final class GlobalExceptionHandler extends ResponseEntityExceptionHandler
         ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
 
+    problemDetail.setType(ProblemType.INTERNAL_ERROR.toUri());
     problemDetail.setTitle("Internal Server Error");
     problemDetail.setInstance(URI.create(request.getRequestURI()));
 
