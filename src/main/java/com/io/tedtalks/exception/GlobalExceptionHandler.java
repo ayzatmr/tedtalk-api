@@ -2,217 +2,193 @@ package com.io.tedtalks.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
-import java.time.Instant;
-import java.time.InstantSource;
+import java.net.URI;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
- * GlobalExceptionHandler is a centralized exception handling class for a Spring application. It
- * captures and processes specific exceptions and returns custom structured error responses to the
- * client using the {@link ErrorResponse} record.
+ * Global exception handler that returns standardized error responses using RFC 9457 Problem Detail.
+ * Extends {@link ResponseEntityExceptionHandler} to leverage Spring's built-in exception handling
+ * for common web exceptions.
+ *
+ * <p>This handler automatically processes standard Spring MVC exceptions (such as validation
+ * errors, malformed requests, etc.) and provides custom handling for application-specific
+ * exceptions.
  */
 @RestControllerAdvice
 @Slf4j
-public final class GlobalExceptionHandler {
-
-  private final InstantSource instantSource;
-
-  public GlobalExceptionHandler(InstantSource instantSource) {
-    this.instantSource = instantSource;
-  }
+public final class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   /**
-   * Handles exceptions of type {@code ResourceNotFoundException} and constructs a structured error
-   * response to be returned to the client.
+   * Handles {@link ResourceNotFoundException} when a requested resource cannot be found in the
+   * system.
    *
-   * @param ex the {@code ResourceNotFoundException} thrown when the requested resource is not found
-   * @param request the {@code HttpServletRequest} associated with the exception at the time it
-   *     occurred
-   * @return a {@code ResponseEntity} containing an {@code ErrorResponse} object with details about
-   *     the error
+   * @param ex the exception thrown when the resource is not found
+   * @param request the HTTP request that triggered the exception
+   * @return a {@link ProblemDetail} with 404 status and error details
    */
   @ExceptionHandler(ResourceNotFoundException.class)
-  public ResponseEntity<ErrorResponse> handleResourceNotFound(
+  public ProblemDetail handleResourceNotFound(
       ResourceNotFoundException ex, HttpServletRequest request) {
 
     log.warn("Resource not found: {}", ex.getMessage());
 
-    ErrorResponse error =
-        new ErrorResponse(
-            instantSource.instant(),
-            HttpStatus.NOT_FOUND,
-            "Not Found",
-            ex.getMessage(),
-            request.getRequestURI());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
 
-    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    problemDetail.setTitle("Resource Not Found");
+    problemDetail.setInstance(URI.create(request.getRequestURI()));
+
+    return problemDetail;
   }
 
   /**
-   * Handles exceptions of type {@code CsvImportException} and constructs a structured error
-   * response to be returned to the client.
+   * Handles {@link CsvImportException} when CSV import processing encounters an error during file
+   * parsing or data validation.
    *
-   * @param ex the {@code CsvImportException} that occurred during the processing of a CSV import
-   * @param request the {@code HttpServletRequest} associated with the exception at the time it
-   *     occurred
-   * @return a {@code ResponseEntity} containing an {@code ErrorResponse} object with details about
-   *     the error
+   * @param ex the exception thrown during CSV import
+   * @param request the HTTP request that triggered the exception
+   * @return a {@link ProblemDetail} with 400 status and error details
    */
   @ExceptionHandler(CsvImportException.class)
-  public ResponseEntity<ErrorResponse> handleCsvImportException(
-      CsvImportException ex, HttpServletRequest request) {
+  public ProblemDetail handleCsvImportException(CsvImportException ex, HttpServletRequest request) {
 
     log.warn("CSV import error: {}", ex.getMessage());
 
-    ErrorResponse error =
-        new ErrorResponse(
-            instantSource.instant(),
-            HttpStatus.BAD_REQUEST,
-            "CSV Import Error",
-            ex.getMessage(),
-            request.getRequestURI());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
 
-    return ResponseEntity.badRequest().body(error);
+    problemDetail.setTitle("CSV Import Error");
+    problemDetail.setInstance(URI.create(request.getRequestURI()));
+
+    return problemDetail;
   }
 
   /**
-   * Handles exceptions of type {@code MethodArgumentNotValidException} and constructs a structured
-   * error response to communicate validation errors to the client.
+   * Handles {@link TooManyImportsException} when the system has reached its concurrent import
+   * capacity limit. Returns a 503 Service Unavailable status with retry guidance.
    *
-   * @param ex the {@code MethodArgumentNotValidException} thrown when request parameters fail
-   *     validation
-   * @param request the {@code HttpServletRequest} associated with the exception at the time it
-   *     occurred
-   * @return a {@code ResponseEntity} containing an {@code ErrorResponse} object with details about
-   *     the validation errors
+   * @param ex the exception thrown when too many imports are running concurrently
+   * @param request the HTTP request that triggered the exception
+   * @return a {@link ResponseEntity} with {@link ProblemDetail} body, 503 status, and Retry-After
+   *     header
    */
-  @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorResponse> handleValidationException(
-      MethodArgumentNotValidException ex, HttpServletRequest request) {
+  @ExceptionHandler(TooManyImportsException.class)
+  public ResponseEntity<ProblemDetail> handleTooManyImports(
+      TooManyImportsException ex, HttpServletRequest request) {
 
-    List<String> details =
-        ex.getBindingResult().getFieldErrors().stream()
-            .map(error -> error.getField() + ": " + error.getDefaultMessage())
-            .toList();
+    log.warn("Too many concurrent imports - rejecting request");
 
-    ErrorResponse error =
-        new ErrorResponse(
-            instantSource.instant(),
-            HttpStatus.BAD_REQUEST,
-            "Validation Error",
-            "Invalid request parameters",
-            request.getRequestURI(),
-            details);
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
 
-    return ResponseEntity.badRequest().body(error);
+    problemDetail.setTitle("Too Many Concurrent Imports");
+    problemDetail.setInstance(URI.create(request.getRequestURI()));
+    problemDetail.setProperty("retryAfterSeconds", 120);
+
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .header("Retry-After", "120")
+        .body(problemDetail);
   }
 
   /**
-   * Handles exceptions of type {@code HttpMessageNotReadableException}, which occur when a request
-   * contains malformed JSON that cannot be deserialized.
+   * Handles {@link ConstraintViolationException} when bean validation constraints are violated,
+   * typically from path variables or request parameters annotated with validation constraints.
    *
-   * @param ex the {@code HttpMessageNotReadableException} thrown due to an unreadable HTTP message
-   *     (e.g., malformed JSON in the request body)
-   * @param request the {@code HttpServletRequest} associated with the exception at the time it
-   *     occurred
-   * @return a {@code ResponseEntity} containing an {@code ErrorResponse} object with details about
-   *     the error
+   * @param ex the exception thrown when validation constraints fail
+   * @param request the HTTP request that triggered the exception
+   * @return a {@link ProblemDetail} with 400 status and list of constraint violations
    */
-  @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
-      HttpMessageNotReadableException ex, HttpServletRequest request) {
-
-    log.warn("Malformed JSON request: {}", ex.getMessage());
-
-    String message = "Malformed JSON request";
-    Throwable cause = ex.getCause();
-    if (cause != null) {
-      message = cause.getMessage();
-    }
-
-    ErrorResponse error =
-        new ErrorResponse(
-            instantSource.instant(),
-            HttpStatus.BAD_REQUEST,
-            "Bad Request",
-            message,
-            request.getRequestURI());
-
-    return ResponseEntity.badRequest().body(error);
-  }
-
-  /**
-   * Handles all uncaught exceptions and constructs a structured error response to be returned to
-   * the client.
-   *
-   * @param ex the {@code Exception} that occurred
-   * @param request the {@code HttpServletRequest} associated with the exception at the time it
-   *     occurred
-   * @return a {@code ResponseEntity} containing an {@code ErrorResponse} object with details about
-   *     the error
-   */
-  @ExceptionHandler(Exception.class)
-  public ResponseEntity<ErrorResponse> handleGlobalException(
-      Exception ex, HttpServletRequest request) {
-
-    log.error("Unexpected error", ex);
-
-    ErrorResponse error =
-        new ErrorResponse(
-            instantSource.instant(),
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "Internal Server Error",
-            "An unexpected error occurred",
-            request.getRequestURI());
-
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-  }
-
   @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<ErrorResponse> handleConstraintViolation(
+  public ProblemDetail handleConstraintViolation(
       ConstraintViolationException ex, HttpServletRequest request) {
 
-    List<String> details =
+    log.warn("Constraint violation: {}", ex.getMessage());
+
+    List<String> violations =
         ex.getConstraintViolations().stream()
             .map(v -> v.getPropertyPath() + ": " + v.getMessage())
             .sorted()
             .toList();
 
-    ErrorResponse error =
-        new ErrorResponse(
-            instantSource.instant(),
-            HttpStatus.BAD_REQUEST,
-            "Bad Request",
-            "Invalid request parameters",
-            request.getRequestURI(),
-            details);
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid request parameters");
 
-    return ResponseEntity.badRequest().body(error);
+    problemDetail.setTitle("Constraint Violation");
+    problemDetail.setInstance(URI.create(request.getRequestURI()));
+    problemDetail.setProperty("violations", violations);
+
+    return problemDetail;
   }
 
   /**
-   * Represents a structured response body for returning error details in the context of HTTP
-   * exceptions. This record is primarily used to standardize the communication of errors to the
-   * client.
+   * Customizes the handling of {@link MethodArgumentNotValidException} to include detailed
+   * validation error messages. This method overrides the default Spring behavior to provide a more
+   * informative response with field-level validation errors.
+   *
+   * @param ex the exception thrown when method argument validation fails
+   * @param headers the HTTP headers to be included in the response
+   * @param status the HTTP status code
+   * @param request the current web request
+   * @return a {@link ResponseEntity} containing a {@link ProblemDetail} with validation errors
    */
-  public record ErrorResponse(
-      Instant timestamp,
-      HttpStatus status,
-      String error,
-      String message,
-      String path,
-      List<String> details) {
+  @Override
+  protected ResponseEntity<Object> handleMethodArgumentNotValid(
+      MethodArgumentNotValidException ex,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
 
-    public ErrorResponse(
-        Instant timestamp, HttpStatus status, String error, String message, String path) {
-      this(timestamp, status, error, message, path, null);
-    }
+    log.warn("Validation error: {}", ex.getMessage());
+
+    List<String> errors =
+        ex.getBindingResult().getFieldErrors().stream()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .sorted()
+            .toList();
+
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid request parameters");
+
+    problemDetail.setTitle("Validation Error");
+    problemDetail.setProperty("errors", errors);
+
+    String path = request.getDescription(false).replace("uri=", "");
+    problemDetail.setInstance(URI.create(path));
+
+    return ResponseEntity.badRequest().body(problemDetail);
+  }
+
+  /**
+   * Handles all uncaught exceptions as a fallback. This method catches any exception not explicitly
+   * handled by other exception handlers and returns a generic 500 Internal Server Error response.
+   *
+   * @param ex the exception that was not handled by specific handlers
+   * @param request the HTTP request that triggered the exception
+   * @return a {@link ProblemDetail} with 500 status for internal server errors
+   */
+  @ExceptionHandler(Exception.class)
+  public ProblemDetail handleGlobalException(Exception ex, HttpServletRequest request) {
+
+    log.error("Unexpected error occurred", ex);
+
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+
+    problemDetail.setTitle("Internal Server Error");
+    problemDetail.setInstance(URI.create(request.getRequestURI()));
+
+    return problemDetail;
   }
 }

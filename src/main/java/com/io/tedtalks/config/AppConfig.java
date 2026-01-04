@@ -4,12 +4,19 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import java.time.InstantSource;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /** Configuration class defining application-level beans for the TED Talks project. */
 @Configuration
+@Slf4j
 public class AppConfig {
 
   /**
@@ -17,8 +24,28 @@ public class AppConfig {
    * contention. Automatically shut down by Spring on context close.
    */
   @Bean(name = "csvImportExecutor", destroyMethod = "shutdown")
-  public ExecutorService csvImportExecutor() {
-    return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("csv-import-", 0).factory());
+  public ExecutorService csvImportExecutor(TedTalksConfig config) {
+
+    ThreadFactory virtualThreadFactory = Thread.ofVirtual().name("csv-import-", 0).factory();
+
+    RejectedExecutionHandler rejectionPolicy =
+        (runnable, executor) -> {
+          log.warn(
+              "CSV import rejected - queue is full. Active: {}, Queue: {}",
+              executor.getActiveCount(),
+              executor.getQueue().size());
+          throw new RejectedExecutionException(
+              "Too many concurrent imports. Please try again later.");
+        };
+
+    return new ThreadPoolExecutor(
+        0,
+        config.csv().maxConcurrentImports(),
+        60L,
+        TimeUnit.SECONDS,
+        new LinkedBlockingQueue<>(config.csv().importQueueCapacity()),
+        virtualThreadFactory,
+        rejectionPolicy);
   }
 
   /**

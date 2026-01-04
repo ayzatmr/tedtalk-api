@@ -7,6 +7,7 @@ import com.io.tedtalks.dto.TedTalkRequest;
 import com.io.tedtalks.entity.ImportStatusEntity;
 import com.io.tedtalks.exception.CsvImportException;
 import com.io.tedtalks.exception.ResourceNotFoundException;
+import com.io.tedtalks.exception.TooManyImportsException;
 import com.io.tedtalks.repository.ImportStatusRepository;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,7 +36,8 @@ import org.springframework.web.multipart.MultipartFile;
  * Service implementation for importing TED Talks data from CSV files.
  *
  * <p>This implementation is designed to process large CSV files asynchronously using an executor
- * for background processing.
+ * for background processing. Import capacity is limited through the executor's bounded queue to
+ * prevent database overload.
  */
 @Service
 @Slf4j
@@ -84,14 +87,25 @@ public final class CsvImportServiceImpl implements CsvImportService {
 
     importStatusRepository.save(ImportStatusEntity.start(importId, clock));
 
-    csvImportExecutor.execute(
-        () -> {
-          try {
-            processImport(importId, tempFile);
-          } finally {
-            deleteTempFile(tempFile);
-          }
-        });
+    try {
+      csvImportExecutor.execute(
+          () -> {
+            try {
+              processImport(importId, tempFile);
+            } finally {
+              deleteTempFile(tempFile);
+            }
+          });
+    } catch (RejectedExecutionException e) {
+      log.warn("Import {} rejected - too many concurrent imports", importId);
+
+      importStatusRepository.deleteById(importId);
+      deleteTempFile(tempFile);
+
+      throw new TooManyImportsException(
+          "System is currently processing the maximum number of imports. "
+              + "Please try again in a few minutes.");
+    }
 
     return importId;
   }
@@ -107,6 +121,13 @@ public final class CsvImportServiceImpl implements CsvImportService {
     return ImportStatusResponse.fromEntity(entity);
   }
 
+  /**
+   * Processes the CSV import in a background thread. Reads records in batches and persists them to
+   * the database. Updates import status upon completion or failure.
+   *
+   * @param importId the unique identifier for this import operation
+   * @param csvFile the path to the temporary CSV file to process
+   */
   public void processImport(String importId, Path csvFile) {
 
     int batchSize = config.csv().batchSize();
@@ -169,13 +190,23 @@ public final class CsvImportServiceImpl implements CsvImportService {
   }
 
   private void markCompleted(String importId) {
-    ImportStatusEntity status = importStatusRepository.findById(importId).orElseThrow();
+    ImportStatusEntity status =
+        importStatusRepository
+            .findById(importId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException("Import status not found with id: " + importId));
     status.markCompleted(clock);
     importStatusRepository.save(status);
   }
 
   private void markFailed(String importId) {
-    ImportStatusEntity status = importStatusRepository.findById(importId).orElseThrow();
+    ImportStatusEntity status =
+        importStatusRepository
+            .findById(importId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException("Import status not found with id: " + importId));
     status.markFailed(clock);
     importStatusRepository.save(status);
   }

@@ -27,9 +27,11 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
-tedtalks:
+ted-talks:
   csv:
     batch-size: 500
+    max-concurrent-imports: 5
+    import-queue-capacity: 20
   influence:
     views-weight: 0.7
     likes-weight: 0.3

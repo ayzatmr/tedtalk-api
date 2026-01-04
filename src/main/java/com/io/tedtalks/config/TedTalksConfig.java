@@ -9,15 +9,18 @@ import org.springframework.validation.annotation.Validated;
 
 /** Configuration class for the TED Talks application. */
 @Validated
-@ConfigurationProperties(prefix = "tedtalks")
+@ConfigurationProperties(prefix = "ted-talks")
 public record TedTalksConfig(@Valid Csv csv, @Valid Influence influence) {
 
   /**
    * Represents the configuration properties for CSV processing in the TED Talks application.
    *
    * @param batchSize The batch size for processing CSV records.
+   * @param maxConcurrentImports Maximum number of concurrent CSV import operations.
+   * @param importQueueCapacity Maximum number of import requests that can wait in queue.
    */
-  public record Csv(@Min(1) int batchSize) {}
+  public record Csv(
+      @Min(1) int batchSize, @Min(1) int maxConcurrentImports, @Min(0) int importQueueCapacity) {}
 
   /**
    * Represents the influence configuration properties for the TED Talks application.
