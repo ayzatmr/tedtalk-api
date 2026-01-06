@@ -28,6 +28,7 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public final class CsvImportServiceImpl implements CsvImportService {
 
   private static final DateTimeFormatter[] DATE_FORMATTERS = {
@@ -52,29 +54,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
   private final TedTalkService tedTalkService;
   private final ImportStatusRepository importStatusRepository;
   private final ExecutorService csvImportExecutor;
-  private final InstantSource clock;
-
-  public CsvImportServiceImpl(
-      TedTalksConfig config,
-      TedTalkService tedTalkService,
-      ImportStatusRepository importStatusRepository,
-      ExecutorService csvImportExecutor,
-      InstantSource clock) {
-
-    this.config = config;
-    this.tedTalkService = tedTalkService;
-    this.importStatusRepository = importStatusRepository;
-    this.csvImportExecutor = csvImportExecutor;
-    this.clock = clock;
-  }
-
-  private static String safe(TedTalkCsvRecord r) {
-    try {
-      return r.getLink();
-    } catch (Exception e) {
-      return "<unknown>";
-    }
-  }
+  private final InstantSource instantSource;
 
   @Override
   public String startImport(MultipartFile file) {
@@ -85,7 +65,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
     String importId = UUID.randomUUID().toString();
     Path tempFile = createTempFile(file);
 
-    importStatusRepository.save(ImportStatusEntity.start(importId, clock));
+    importStatusRepository.save(ImportStatusEntity.start(importId, instantSource));
 
     try {
       csvImportExecutor.execute(
@@ -148,7 +128,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
         try {
           batch.add(toRequest(record));
         } catch (Exception e) {
-          log.warn("Invalid record skipped [{}]", safe(record));
+          log.warn("Invalid record skipped [{}]", record);
           continue;
         }
 
@@ -196,7 +176,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException("Import status not found with id: " + importId));
-    status.markCompleted(clock);
+    status.markCompleted(instantSource);
     importStatusRepository.save(status);
   }
 
@@ -207,7 +187,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException("Import status not found with id: " + importId));
-    status.markFailed(clock);
+    status.markFailed(instantSource);
     importStatusRepository.save(status);
   }
 
@@ -216,16 +196,6 @@ public final class CsvImportServiceImpl implements CsvImportService {
         new HeaderColumnNameMappingStrategy<>();
     strategy.setType(TedTalkCsvRecord.class);
     return strategy;
-  }
-
-  private TedTalkRequest toRequest(TedTalkCsvRecord r) {
-    return new TedTalkRequest(
-        r.getTitle(),
-        r.getAuthor(),
-        parseDate(r.getDate()),
-        parseLong(r.getViews()),
-        parseLong(r.getLikes()),
-        r.getLink());
   }
 
   private YearMonth parseDate(String value) {
@@ -248,5 +218,15 @@ public final class CsvImportServiceImpl implements CsvImportService {
     } catch (Exception e) {
       return 0;
     }
+  }
+
+  private TedTalkRequest toRequest(TedTalkCsvRecord r) {
+    return new TedTalkRequest(
+        r.getTitle(),
+        r.getAuthor(),
+        parseDate(r.getDate()),
+        parseLong(r.getViews()),
+        parseLong(r.getLikes()),
+        r.getLink());
   }
 }

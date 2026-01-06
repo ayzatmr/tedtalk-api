@@ -30,4 +30,32 @@ public class TedTalkCsvRecord {
 
   @CsvBindByName(column = "link", required = true)
   private String link;
+
+  @Override
+  public String toString() {
+    return "TedTalkCsvRecord{"
+        + "title='"
+        + safe(title)
+        + '\''
+        + ", author='"
+        + safe(author)
+        + '\''
+        + ", date='"
+        + safe(date)
+        + '\''
+        + ", views='"
+        + safe(views)
+        + '\''
+        + ", likes='"
+        + safe(likes)
+        + '\''
+        + ", link='"
+        + safe(link)
+        + '\''
+        + '}';
+  }
+
+  private static String safe(String value) {
+    return value == null ? "<null>" : value;
+  }
 }
