@@ -44,7 +44,7 @@ final class InfluenceAnalysisServiceImplTest {
 
   @Test
   void getMostInfluentialSpeakers_shouldReturnList() {
-    SpeakerInfluenceDto dto = new SpeakerInfluenceDtoStub("John Doe", 5000L, 500L, 1000.0, 3L);
+    SpeakerInfluenceDto dto = new SpeakerInfluenceDto("John Doe", 5000L, 500L, 1000.0, 3L);
 
     when(analyticsRepository.findMostInfluentialSpeakers(VIEWS_WEIGHT, LIKES_WEIGHT, 5))
         .thenReturn(List.of(dto));
@@ -61,7 +61,7 @@ final class InfluenceAnalysisServiceImplTest {
   @Test
   void getMostInfluentialTalks_shouldReturnList() {
     InfluentialTalkDto dto =
-        new InfluentialTalkDtoStub(
+        new InfluentialTalkDto(
             1L, "Test Talk", "John Doe", 2020, 1, 1000L, 100L, "http://test.com", 800.0);
 
     when(analyticsRepository.findMostInfluentialTalks(VIEWS_WEIGHT, LIKES_WEIGHT, 5))
@@ -79,7 +79,7 @@ final class InfluenceAnalysisServiceImplTest {
   @Test
   void getMostInfluentialTalkByYear_shouldReturnList() {
     InfluentialTalkDto dto =
-        new InfluentialTalkDtoStub(
+        new InfluentialTalkDto(
             1L, "Test Talk", "John Doe", 2020, 1, 1000L, 100L, "http://test.com", 800.0);
 
     when(analyticsRepository.findMostInfluentialTalkPerYear(VIEWS_WEIGHT, LIKES_WEIGHT))
@@ -110,7 +110,7 @@ final class InfluenceAnalysisServiceImplTest {
 
   @Test
   void getSpeakerInfluence_shouldReturnSpeaker() {
-    SpeakerInfluenceDto dto = new SpeakerInfluenceDtoStub("John Doe", 5000L, 500L, 1000.0, 3L);
+    SpeakerInfluenceDto dto = new SpeakerInfluenceDto("John Doe", 5000L, 500L, 1000.0, 3L);
 
     when(analyticsRepository.findSpeakerInfluence("John Doe", VIEWS_WEIGHT, LIKES_WEIGHT))
         .thenReturn(Optional.of(dto));
@@ -122,93 +122,5 @@ final class InfluenceAnalysisServiceImplTest {
 
     verify(analyticsRepository).findSpeakerInfluence("John Doe", VIEWS_WEIGHT, LIKES_WEIGHT);
     verifyNoMoreInteractions(analyticsRepository);
-  }
-
-  private record InfluentialTalkDtoStub(
-      Long id,
-      String title,
-      String author,
-      Integer year,
-      Integer month,
-      Long views,
-      Long likes,
-      String link,
-      Double influence)
-      implements InfluentialTalkDto {
-
-    @Override
-    public Long getId() {
-      return id;
-    }
-
-    @Override
-    public String getTitle() {
-      return title;
-    }
-
-    @Override
-    public String getAuthor() {
-      return author;
-    }
-
-    @Override
-    public Integer getYearValue() {
-      return year;
-    }
-
-    @Override
-    public Integer getMonthValue() {
-      return month;
-    }
-
-    @Override
-    public Long getViews() {
-      return views;
-    }
-
-    @Override
-    public Long getLikes() {
-      return likes;
-    }
-
-    @Override
-    public String getLink() {
-      return link;
-    }
-
-    @Override
-    public Double getInfluence() {
-      return influence;
-    }
-  }
-
-  private record SpeakerInfluenceDtoStub(
-      String author, Long totalViews, Long totalLikes, Double totalInfluence, Long talkCount)
-      implements SpeakerInfluenceDto {
-
-    @Override
-    public String getAuthor() {
-      return author;
-    }
-
-    @Override
-    public Long getTotalViews() {
-      return totalViews;
-    }
-
-    @Override
-    public Long getTotalLikes() {
-      return totalLikes;
-    }
-
-    @Override
-    public Double getTotalInfluence() {
-      return totalInfluence;
-    }
-
-    @Override
-    public Long getTalkCount() {
-      return talkCount;
-    }
   }
 }

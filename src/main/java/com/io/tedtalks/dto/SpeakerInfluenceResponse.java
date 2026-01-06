@@ -27,11 +27,11 @@ public record SpeakerInfluenceResponse(
    */
   public static SpeakerInfluenceResponse fromDto(SpeakerInfluenceDto dto) {
     return new SpeakerInfluenceResponse(
-        dto.getAuthor(),
-        dto.getTotalInfluence(),
-        dto.getTotalViews(),
-        dto.getTotalLikes(),
-        dto.getTalkCount(),
+        dto.author(),
+        dto.totalInfluence(),
+        dto.totalViews(),
+        dto.totalLikes(),
+        dto.talkCount(),
         List.of());
   }
 }

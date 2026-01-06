@@ -1,166 +1,180 @@
 package com.io.tedtalks.repository;
 
+import static com.io.tedtalks.jooq.tables.TedTalks.TED_TALKS;
+import static org.jooq.impl.DSL.count;
+import static org.jooq.impl.DSL.sum;
+
 import com.io.tedtalks.dto.InfluentialTalkDto;
 import com.io.tedtalks.dto.SpeakerInfluenceDto;
-import com.io.tedtalks.entity.TedTalkEntity;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
-import org.springframework.data.repository.query.Param;
+import lombok.RequiredArgsConstructor;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
+import org.springframework.stereotype.Repository;
 
-/** Repository interface for managing influence analysis queries on TED Talks data. */
-@org.springframework.stereotype.Repository
-public interface InfluenceAnalysisRepository extends Repository<TedTalkEntity, Long> {
+/**
+ * Repository class for performing influence analysis on TED Talks data using a database. Provides
+ * methods to retrieve influential talks and analyze influencers by aggregating views and likes
+ * metrics with configurable weights.
+ *
+ * <p>The calculations focus on defining and sorting influence based on the provided weights for
+ * views and likes. Results are returned as DTO objects corresponding to the talks or speakers.
+ */
+@Repository
+@RequiredArgsConstructor
+public class InfluenceAnalysisRepository {
+
+  private final DSLContext dsl;
 
   /**
-   * Retrieves the most influential TED Talks based on a weighted calculation of views and likes.
+   * Computes and retrieves a list of the most influential TED Talks based on a weighted score
+   * calculated using the number of views and likes.
    *
-   * <p>The influence is calculated as: influence = (views * viewsWeight) + (likes * likesWeight).
-   * The results are sorted in descending order of influence and limited by the specified limit.
-   *
-   * @param viewsWeight the weight assigned to the number of views in the influence calculation
-   * @param likesWeight the weight assigned to the number of likes in the influence calculation
-   * @param limit the maximum number of results to retrieve
-   * @return a list of {@code InfluentialTalkDto} objects representing the most influential TED
-   *     Talks
+   * @param viewsWeight the weight assigned to the number of views in calculating the influence score
+   * @param likesWeight the weight assigned to the number of likes in calculating the influence score
+   * @param limit the maximum number of most influential talks to retrieve
+   * @return a list of {@code InfluentialTalkDto} objects representing the most influential TED Talks
    */
-  @Query(
-      value =
-          """
-          SELECT
-            id,
-            title,
-            author,
-            year_value  AS yearValue,
-            month_value AS monthValue,
-            views,
-            likes,
-            link,
-            (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS influence
-          FROM ted_talks
-          ORDER BY (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) DESC
-          LIMIT :limit
-          """,
-      nativeQuery = true)
-  List<InfluentialTalkDto> findMostInfluentialTalks(
-      @Param("viewsWeight") double viewsWeight,
-      @Param("likesWeight") double likesWeight,
-      @Param("limit") int limit);
+  public List<InfluentialTalkDto> findMostInfluentialTalks(
+      double viewsWeight, double likesWeight, int limit) {
+
+    var influence =
+        TED_TALKS
+            .VIEWS
+            .cast(Double.class)
+            .mul(viewsWeight)
+            .plus(TED_TALKS.LIKES.cast(Double.class).mul(likesWeight))
+            .as("influence");
+
+    return dsl.select(
+            TED_TALKS.ID,
+            TED_TALKS.TITLE,
+            TED_TALKS.AUTHOR,
+            TED_TALKS.YEAR_VALUE.as("yearValue"),
+            TED_TALKS.MONTH_VALUE.as("monthValue"),
+            TED_TALKS.VIEWS,
+            TED_TALKS.LIKES,
+            TED_TALKS.LINK,
+            influence)
+        .from(TED_TALKS)
+        .orderBy(influence.desc())
+        .limit(limit)
+        .fetchInto(InfluentialTalkDto.class);
+  }
 
   /**
-   * Retrieves a list of the most influential speakers based on the weighted influence.
+   * Retrieves a list of the most influential speakers based on a weighted influence score
+   * calculated using the number of views and likes for their TED Talks.
    *
-   * <p>The method executes a query to aggregate and sort TED Talk data by speaker influence,
-   * summing views and likes weighted by the specified coefficients, and limits the results to the
-   * specified number of top speakers.
-   *
-   * @param viewsWeight the weight applied to the number of views when calculating influence
-   * @param likesWeight the weight applied to the number of likes when calculating influence
-   * @param limit the maximum number of speakers to include in the result
-   * @return a list of SpeakerInfluenceDto objects representing the most influential speakers
+   * @param viewsWeight the weight assigned to the number of views in calculating the influence score
+   * @param likesWeight the weight assigned to the number of likes in calculating the influence score
+   * @param limit the maximum number of speakers to retrieve
+   * @return a list of {@code SpeakerInfluenceDto} objects representing the most influential speakers
    */
-  @Query(
-      value =
-          """
-                SELECT
-                  author,
-                  totalViews,
-                  totalLikes,
-                  totalInfluence,
-                  talkCount
-                FROM (
-                  SELECT
-                    author,
-                    SUM(views) AS totalViews,
-                    SUM(likes) AS totalLikes,
-                    SUM(CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS totalInfluence,
-                    COUNT(*) AS talkCount
-                  FROM ted_talks
-                  GROUP BY author
-                )
-                ORDER BY totalInfluence DESC
-                LIMIT :limit
-          """,
-      nativeQuery = true)
-  List<SpeakerInfluenceDto> findMostInfluentialSpeakers(
-      @Param("viewsWeight") double viewsWeight,
-      @Param("likesWeight") double likesWeight,
-      @Param("limit") int limit);
+  public List<SpeakerInfluenceDto> findMostInfluentialSpeakers(
+      double viewsWeight, double likesWeight, int limit) {
+
+    var totalViews = sum(TED_TALKS.VIEWS).as("totalViews");
+    var totalLikes = sum(TED_TALKS.LIKES).as("totalLikes");
+    var totalInfluence =
+        sum(TED_TALKS
+                .VIEWS
+                .cast(Double.class)
+                .mul(viewsWeight)
+                .plus(TED_TALKS.LIKES.cast(Double.class).mul(likesWeight)))
+            .as("totalInfluence");
+    var talkCount = count().as("talkCount");
+
+    return dsl.select(TED_TALKS.AUTHOR, totalViews, totalLikes, totalInfluence, talkCount)
+        .from(TED_TALKS)
+        .groupBy(TED_TALKS.AUTHOR)
+        .orderBy(totalInfluence.desc())
+        .limit(limit)
+        .fetchInto(SpeakerInfluenceDto.class);
+  }
 
   /**
-   * Retrieves the influence metrics of a speaker based on TED talk data. The method calculates
-   * total views, total likes, total influence, and the count of talks given by the specified
-   * speaker, considering the provided weights for views and likes.
+   * Retrieves the influence details of a specific speaker based on a weighted influence
+   * score calculated using the number of views and likes for their TED Talks.
    *
-   * @param author the name of the speaker whose influence data is to be retrieved; case-insensitive
-   * @param viewsWeight the weight applied to the number of views for influence calculation
-   * @param likesWeight the weight applied to the number of likes for influence calculation
-   * @return an {@code Optional} containing a {@code SpeakerInfluenceDto} with the aggregated
-   *     influence data if the speaker exists, or an empty {@code Optional} if no data is found
+   * @param author the name of the speaker whose influence is being calculated
+   * @param viewsWeight the weight assigned to the number of views in calculating the influence score
+   * @param likesWeight the weight assigned to the number of likes in calculating the influence score
+   * @return an {@code Optional<SpeakerInfluenceDto>} containing the speaker's influence data if found,
+   *         or an empty {@code Optional} if no data is available for the specified speaker
    */
-  @Query(
-      value =
-          """
-          SELECT
-            author,
-            SUM(views) AS totalViews,
-            SUM(likes) AS totalLikes,
-            SUM(CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS totalInfluence,
-            COUNT(*) AS talkCount
-          FROM ted_talks
-          WHERE LOWER(author) = LOWER(:author)
-          GROUP BY author
-          """,
-      nativeQuery = true)
-  Optional<SpeakerInfluenceDto> findSpeakerInfluence(
-      @Param("author") String author,
-      @Param("viewsWeight") double viewsWeight,
-      @Param("likesWeight") double likesWeight);
+  public Optional<SpeakerInfluenceDto> findSpeakerInfluence(
+      String author, double viewsWeight, double likesWeight) {
+
+    var totalViews = sum(TED_TALKS.VIEWS).as("totalViews");
+    var totalLikes = sum(TED_TALKS.LIKES).as("totalLikes");
+    var totalInfluence =
+        sum(TED_TALKS
+                .VIEWS
+                .cast(Double.class)
+                .mul(viewsWeight)
+                .plus(TED_TALKS.LIKES.cast(Double.class).mul(likesWeight)))
+            .as("totalInfluence");
+    var talkCount = count().as("talkCount");
+
+    return dsl.select(TED_TALKS.AUTHOR, totalViews, totalLikes, totalInfluence, talkCount)
+        .from(TED_TALKS)
+        .where(DSL.lower(TED_TALKS.AUTHOR).eq(author.toLowerCase()))
+        .groupBy(TED_TALKS.AUTHOR)
+        .fetchOptionalInto(SpeakerInfluenceDto.class);
+  }
 
   /**
-   * Finds the most influential TED Talks for each year based on a weighted combination of the
-   * number of views and likes.
+   * Retrieves a list of the most influential TED Talks for each year, based on a calculated
+   * influence score that uses weighted values of views and likes.
    *
-   * @param viewsWeight the weight applied to the number of views in the influence calculation
-   * @param likesWeight the weight applied to the number of likes in the influence calculation
+   * @param viewsWeight the weight assigned to the number of views in calculating the influence score
+   * @param likesWeight the weight assigned to the number of likes in calculating the influence score
    * @return a list of {@code InfluentialTalkDto} objects representing the most influential TED Talk
-   *     for each year
+   *         for each year
    */
-  @Query(
-      value =
-          """
-            SELECT
-              id,
-              title,
-              author,
-              yearValue,
-              monthValue,
-              views,
-              likes,
-              link,
-              influence
-            FROM (
-              SELECT
-                id,
-                title,
-                author,
-                year_value  AS yearValue,
-                month_value AS monthValue,
-                views,
-                likes,
-                link,
-                (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) AS influence,
-                ROW_NUMBER() OVER (
-                  PARTITION BY year_value
-                  ORDER BY (CAST(views AS DOUBLE) * :viewsWeight + CAST(likes AS DOUBLE) * :likesWeight) DESC
-                ) AS rn
-              FROM ted_talks
-            )
-            WHERE rn = 1
-            ORDER BY yearValue
-          """,
-      nativeQuery = true)
-  List<InfluentialTalkDto> findMostInfluentialTalkPerYear(
-      @Param("viewsWeight") double viewsWeight, @Param("likesWeight") double likesWeight);
+  public List<InfluentialTalkDto> findMostInfluentialTalkPerYear(
+      double viewsWeight, double likesWeight) {
+
+    var influence =
+        TED_TALKS
+            .VIEWS
+            .cast(Double.class)
+            .mul(viewsWeight)
+            .plus(TED_TALKS.LIKES.cast(Double.class).mul(likesWeight));
+
+    var rn =
+        DSL.rowNumber().over().partitionBy(TED_TALKS.YEAR_VALUE).orderBy(influence.desc()).as("rn");
+
+    var subquery =
+        dsl.select(
+                TED_TALKS.ID,
+                TED_TALKS.TITLE,
+                TED_TALKS.AUTHOR,
+                TED_TALKS.YEAR_VALUE,
+                TED_TALKS.MONTH_VALUE,
+                TED_TALKS.VIEWS,
+                TED_TALKS.LIKES,
+                TED_TALKS.LINK,
+                influence.as("influence"),
+                rn)
+            .from(TED_TALKS)
+            .asTable("ranked");
+
+    return dsl.select(
+            subquery.field(TED_TALKS.ID).as("id"),
+            subquery.field(TED_TALKS.TITLE).as("title"),
+            subquery.field(TED_TALKS.AUTHOR).as("author"),
+            subquery.field(TED_TALKS.YEAR_VALUE).as("yearValue"),
+            subquery.field(TED_TALKS.MONTH_VALUE).as("monthValue"),
+            subquery.field(TED_TALKS.VIEWS).as("views"),
+            subquery.field(TED_TALKS.LIKES).as("likes"),
+            subquery.field(TED_TALKS.LINK).as("link"),
+            subquery.field("influence", Double.class).as("influence"))
+        .from(subquery)
+        .where(subquery.field("rn", Integer.class).eq(1))
+        .orderBy(subquery.field(TED_TALKS.YEAR_VALUE))
+        .fetchInto(InfluentialTalkDto.class);
+  }
 }

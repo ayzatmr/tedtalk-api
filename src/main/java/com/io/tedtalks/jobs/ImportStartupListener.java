@@ -1,12 +1,13 @@
 package com.io.tedtalks.jobs;
 
-import com.io.tedtalks.entity.ImportStatusEntity;
+import com.io.tedtalks.model.ImportStatusModel;
 import com.io.tedtalks.repository.ImportStatusRepository;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.InstantSource;
+import java.time.ZoneOffset;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +33,17 @@ public class ImportStartupListener {
 
     Instant threshold = Instant.now().minus(Duration.ofMinutes(30));
 
-    List<ImportStatusEntity> stuckImports =
+    List<ImportStatusModel> stuckImports =
         importStatusRepository.findAll().stream()
-            .filter(i -> i.getStatus() == ImportStatusEntity.ImportStatus.PROCESSING)
-            .filter(i -> i.getStartedAt().isBefore(threshold))
+            .filter(
+                i ->
+                    i.getStatus()
+                        .equals(ImportStatusModel.ImportStatusEnum.PROCESSING.name()))
+            .filter(
+                i ->
+                    i.getStartedAt()
+                        .toInstant(ZoneOffset.UTC)
+                        .isBefore(threshold))
             .toList();
 
     if (stuckImports.isEmpty()) {
@@ -44,7 +52,7 @@ public class ImportStartupListener {
     }
 
     stuckImports.forEach(i -> i.markFailed(InstantSource.system()));
-    importStatusRepository.saveAll(stuckImports);
+    stuckImports.forEach(importStatusRepository::save);
 
     log.warn("Marked {} stuck imports as FAILED on startup", stuckImports.size());
   }

@@ -3,23 +3,30 @@ package com.io.tedtalks.repository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.io.tedtalks.entity.TedTalkEntity;
+import com.io.tedtalks.dto.PagedResponse;
+import com.io.tedtalks.model.TedTalk;
 import java.time.YearMonth;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.data.domain.Page;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 
-@DataJpaTest
+@SpringBootTest
 class TedTalkRepositoryTest {
 
   private static final PageRequest PAGE = PageRequest.of(0, 10);
   @Autowired private TedTalkRepository repository;
 
-  private static TedTalkEntity talk(String title, String author, int year) {
+  @BeforeEach
+  void cleanDatabase() {
+    repository.deleteAll();
+  }
 
-    return TedTalkEntity.of(
+  private static TedTalk talk(String title, String author, int year) {
+
+    return TedTalk.of(
         title,
         author,
         YearMonth.of(year, 1),
@@ -32,9 +39,9 @@ class TedTalkRepositoryTest {
   void findByFilters_shouldReturnAllWhenNoFilters() {
     repository.save(talk("Test Talk", "John Doe", 2020));
 
-    Page<TedTalkEntity> result = repository.findByFilters(null, null, null, PAGE);
+    PagedResponse<TedTalk> result = repository.findByFilters(null, null, null, PAGE);
 
-    assertEquals(1, result.getTotalElements());
+    assertEquals(1, result.metadata().totalElements());
   }
 
   @Test
@@ -42,10 +49,10 @@ class TedTalkRepositoryTest {
     repository.save(talk("Talk 1", "John Doe", 2020));
     repository.save(talk("Talk 2", "Jane Smith", 2020));
 
-    Page<TedTalkEntity> result = repository.findByFilters("John", null, null, PAGE);
+    PagedResponse<TedTalk> result = repository.findByFilters("John", null, null, PAGE);
 
-    assertEquals(1, result.getTotalElements());
-    assertEquals("John Doe", result.getContent().getFirst().getAuthor());
+    assertEquals(1, result.metadata().totalElements());
+    assertEquals("John Doe", result.rows().getFirst().getAuthor());
   }
 
   @Test
@@ -53,10 +60,10 @@ class TedTalkRepositoryTest {
     repository.save(talk("Talk 1", "John Doe", 2020));
     repository.save(talk("Talk 2", "Jane Smith", 2021));
 
-    Page<TedTalkEntity> result = repository.findByFilters(null, 2020, null, PAGE);
+    PagedResponse<TedTalk> result = repository.findByFilters(null, 2020, null, PAGE);
 
-    assertEquals(1, result.getTotalElements());
-    assertEquals(2020, result.getContent().getFirst().getYear());
+    assertEquals(1, result.metadata().totalElements());
+    assertEquals(2020, result.rows().getFirst().getYearValue());
   }
 
   @Test
@@ -64,28 +71,28 @@ class TedTalkRepositoryTest {
     repository.save(talk("AI Revolution", "John Doe", 2020));
     repository.save(talk("Climate Change", "Jane Smith", 2020));
 
-    Page<TedTalkEntity> result = repository.findByFilters(null, null, "AI", PAGE);
+    PagedResponse<TedTalk> result = repository.findByFilters(null, null, "AI", PAGE);
 
-    assertEquals(1, result.getTotalElements());
-    assertTrue(result.getContent().getFirst().getTitle().contains("AI"));
+    assertEquals(1, result.metadata().totalElements());
+    assertTrue(result.rows().getFirst().getTitle().contains("AI"));
   }
 
   @Test
   void findByFilters_shouldCombineFilters() {
     repository.save(talk("AI Revolution", "John Doe", 2020));
 
-    Page<TedTalkEntity> result = repository.findByFilters("John", 2020, "AI", PAGE);
+    PagedResponse<TedTalk> result = repository.findByFilters("John", 2020, "AI", PAGE);
 
-    assertEquals(1, result.getTotalElements());
-    assertEquals("AI Revolution", result.getContent().getFirst().getTitle());
+    assertEquals(1, result.metadata().totalElements());
+    assertEquals("AI Revolution", result.rows().getFirst().getTitle());
   }
 
   @Test
   void findByFilters_shouldReturnEmptyWhenNoMatch() {
     repository.save(talk("Test Talk", "John Doe", 2020));
 
-    Page<TedTalkEntity> result = repository.findByFilters("Unknown", null, null, PAGE);
+    PagedResponse<TedTalk> result = repository.findByFilters("Unknown", null, null, PAGE);
 
-    assertTrue(result.isEmpty());
+    assertTrue(result.rows().isEmpty());
   }
 }

@@ -11,20 +11,34 @@ import org.springframework.data.domain.Page;
  */
 public record PagedResponse<T>(List<T> rows, PageMetadata metadata) {
 
-  /**
-   * Creates a new instance of {@code PagedResponse} containing the provided list of elements along
-   * with the metadata extracted from the given page information.
-   *
-   * @param <T> The type of elements in the paged response.
-   * @param content The list of elements to include in the response.
-   * @param page The page information containing metadata about the pagination state.
-   * @return A new {@code PagedResponse} instance with the specified content and metadata.
-   */
+  public PagedResponse(List<T> content, int page, int size, long totalElements, int totalPages) {
+    this(
+        content,
+        new PageMetadata(
+            page,
+            size,
+            totalElements,
+            totalPages,
+            page == 0,
+            page >= totalPages - 1,
+            page < totalPages - 1,
+            page > 0));
+  }
+
+  public PagedResponse(Page<T> page) {
+    this(
+        page.getContent(),
+        page.getNumber(),
+        page.getSize(),
+        page.getTotalElements(),
+        page.getTotalPages());
+  }
+
   public static <T> PagedResponse<T> of(List<T> content, Page<?> page) {
     return new PagedResponse<>(List.copyOf(content), PageMetadata.from(page));
   }
 
-  record PageMetadata(
+  public record PageMetadata(
       int page,
       int size,
       long totalElements,

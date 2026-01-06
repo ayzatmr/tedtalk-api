@@ -4,10 +4,10 @@ import com.io.tedtalks.config.TedTalksConfig;
 import com.io.tedtalks.dto.ImportStatusResponse;
 import com.io.tedtalks.dto.TedTalkCsvRecord;
 import com.io.tedtalks.dto.TedTalkRequest;
-import com.io.tedtalks.entity.ImportStatusEntity;
 import com.io.tedtalks.exception.CsvImportException;
 import com.io.tedtalks.exception.ResourceNotFoundException;
 import com.io.tedtalks.exception.TooManyImportsException;
+import com.io.tedtalks.model.ImportStatusModel;
 import com.io.tedtalks.repository.ImportStatusRepository;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
@@ -85,7 +85,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
     String importId = UUID.randomUUID().toString();
     Path tempFile = createTempFile(file);
 
-    importStatusRepository.save(ImportStatusEntity.start(importId, clock));
+    importStatusRepository.save(ImportStatusModel.start(importId, clock));
 
     try {
       csvImportExecutor.execute(
@@ -112,7 +112,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
 
   @Override
   public ImportStatusResponse getImportStatus(String importId) {
-    ImportStatusEntity entity =
+    ImportStatusModel entity =
         importStatusRepository
             .findById(importId)
             .orElseThrow(
@@ -190,7 +190,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
   }
 
   private void markCompleted(String importId) {
-    ImportStatusEntity status =
+    ImportStatusModel status =
         importStatusRepository
             .findById(importId)
             .orElseThrow(
@@ -201,7 +201,7 @@ public final class CsvImportServiceImpl implements CsvImportService {
   }
 
   private void markFailed(String importId) {
-    ImportStatusEntity status =
+    ImportStatusModel status =
         importStatusRepository
             .findById(importId)
             .orElseThrow(

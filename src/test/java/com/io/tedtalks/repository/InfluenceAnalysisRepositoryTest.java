@@ -5,15 +5,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.io.tedtalks.dto.InfluentialTalkDto;
 import com.io.tedtalks.dto.SpeakerInfluenceDto;
-import com.io.tedtalks.entity.TedTalkEntity;
+import com.io.tedtalks.model.TedTalk;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 
-@DataJpaTest
+@SpringBootTest
 class InfluenceAnalysisRepositoryTest {
 
   private static final double VIEW_WEIGHT = 0.7;
@@ -23,10 +25,15 @@ class InfluenceAnalysisRepositoryTest {
 
   @Autowired private TedTalkRepository tedTalkRepository;
 
-  private static TedTalkEntity talk(
+  @BeforeEach
+  void cleanDatabase() {
+    tedTalkRepository.deleteAll();
+  }
+
+  private static TedTalk talk(
       String title, String author, int year, int month, int views, int likes) {
 
-    return TedTalkEntity.of(
+    return TedTalk.of(
         title,
         author,
         YearMonth.of(year, month),
@@ -44,8 +51,8 @@ class InfluenceAnalysisRepositoryTest {
         repository.findMostInfluentialTalks(VIEW_WEIGHT, LIKE_WEIGHT, 10);
 
     assertEquals(2, result.size());
-    assertTrue(result.get(0).getInfluence() > result.get(1).getInfluence());
-    assertEquals("Talk 2", result.get(0).getTitle());
+    assertTrue(result.get(0).influence() > result.get(1).influence());
+    assertEquals("Talk 2", result.get(0).title());
   }
 
   @Test
@@ -60,11 +67,11 @@ class InfluenceAnalysisRepositoryTest {
     assertEquals(2, result.size());
 
     SpeakerInfluenceDto john =
-        result.stream().filter(s -> s.getAuthor().equals("John Doe")).findFirst().orElseThrow();
+        result.stream().filter(s -> s.author().equals("John Doe")).findFirst().orElseThrow();
 
-    assertEquals(3000L, john.getTotalViews());
-    assertEquals(300L, john.getTotalLikes());
-    assertEquals(2L, john.getTalkCount());
+    assertEquals(3000L, john.totalViews());
+    assertEquals(300L, john.totalLikes());
+    assertEquals(2L, john.talkCount());
   }
 
   @Test
@@ -78,10 +85,10 @@ class InfluenceAnalysisRepositoryTest {
     assertTrue(result.isPresent());
 
     SpeakerInfluenceDto speaker = result.get();
-    assertEquals("John Doe", speaker.getAuthor());
-    assertEquals(3000L, speaker.getTotalViews());
-    assertEquals(300L, speaker.getTotalLikes());
-    assertEquals(2L, speaker.getTalkCount());
+    assertEquals("John Doe", speaker.author());
+    assertEquals(3000L, speaker.totalViews());
+    assertEquals(300L, speaker.totalLikes());
+    assertEquals(2L, speaker.talkCount());
   }
 
   @Test
@@ -100,7 +107,7 @@ class InfluenceAnalysisRepositoryTest {
         repository.findSpeakerInfluence("john doe", VIEW_WEIGHT, LIKE_WEIGHT);
 
     assertTrue(result.isPresent());
-    assertEquals("John Doe", result.get().getAuthor());
+    assertEquals("John Doe", result.get().author());
   }
 
   @Test
@@ -114,11 +121,11 @@ class InfluenceAnalysisRepositoryTest {
 
     assertEquals(2, result.size());
 
-    assertEquals("Talk 2020 B", result.get(0).getTitle());
-    assertEquals(2020, result.get(0).getYearValue());
+    assertEquals("Talk 2020 B", result.get(0).title());
+    assertEquals(2020, result.get(0).yearValue());
 
-    assertEquals("Talk 2021", result.get(1).getTitle());
-    assertEquals(2021, result.get(1).getYearValue());
+    assertEquals("Talk 2021", result.get(1).title());
+    assertEquals(2021, result.get(1).yearValue());
   }
 
   @Test

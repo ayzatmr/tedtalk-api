@@ -11,9 +11,9 @@ import static org.mockito.Mockito.when;
 
 import com.io.tedtalks.config.TedTalksConfig;
 import com.io.tedtalks.dto.ImportStatusResponse;
-import com.io.tedtalks.entity.ImportStatusEntity;
 import com.io.tedtalks.exception.CsvImportException;
 import com.io.tedtalks.exception.ResourceNotFoundException;
+import com.io.tedtalks.model.ImportStatusModel;
 import com.io.tedtalks.repository.ImportStatusRepository;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -63,14 +63,14 @@ final class CsvImportServiceImplTest {
     when(file.isEmpty()).thenReturn(false);
     when(file.getInputStream()).thenReturn(new ByteArrayInputStream("test".getBytes()));
     when(clock.instant()).thenReturn(now);
-    when(importStatusRepository.save(any(ImportStatusEntity.class)))
+    when(importStatusRepository.save(any(ImportStatusModel.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
     doNothing().when(csvImportExecutor).execute(any(Runnable.class));
 
     String importId = service.startImport(file);
 
     assertNotNull(importId);
-    verify(importStatusRepository).save(any(ImportStatusEntity.class));
+    verify(importStatusRepository).save(any(ImportStatusModel.class));
     verify(csvImportExecutor).execute(any(Runnable.class));
   }
 
@@ -81,7 +81,7 @@ final class CsvImportServiceImplTest {
 
     when(clock.instant()).thenReturn(now);
 
-    ImportStatusEntity entity = ImportStatusEntity.start(importId, clock);
+    ImportStatusModel entity = ImportStatusModel.start(importId, clock);
     when(importStatusRepository.findById(importId)).thenReturn(Optional.of(entity));
 
     ImportStatusResponse response = service.getImportStatus(importId);

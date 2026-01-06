@@ -55,7 +55,7 @@ public final class InfluenceAnalysisServiceImpl implements InfluenceAnalysisServ
   @Override
   public List<YearlyInfluenceResponse> getMostInfluentialTalkByYear() {
     return analyticsRepository.findMostInfluentialTalkPerYear(viewsWeight, likesWeight).stream()
-        .map(dto -> new YearlyInfluenceResponse(dto.getYearValue(), TedTalkResponse.fromDto(dto)))
+        .map(dto -> new YearlyInfluenceResponse(dto.yearValue(), TedTalkResponse.fromDto(dto)))
         .toList();
   }
 

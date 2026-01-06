@@ -12,8 +12,8 @@ import com.io.tedtalks.config.TedTalksConfig;
 import com.io.tedtalks.dto.PagedResponse;
 import com.io.tedtalks.dto.TedTalkRequest;
 import com.io.tedtalks.dto.TedTalkResponse;
-import com.io.tedtalks.entity.TedTalkEntity;
 import com.io.tedtalks.exception.ResourceNotFoundException;
+import com.io.tedtalks.model.TedTalk;
 import com.io.tedtalks.repository.TedTalkRepository;
 import java.time.YearMonth;
 import java.util.List;
@@ -23,8 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,9 +48,9 @@ final class TedTalkServiceImplTest {
         "http://test.com/" + title.replace(" ", "-"));
   }
 
-  private static TedTalkEntity entity(String title) {
+  private static TedTalk entity(String title) {
 
-    return TedTalkEntity.of(
+    return TedTalk.of(
         title,
         "John Doe",
         YearMonth.of(2020, 1),
@@ -77,14 +75,14 @@ final class TedTalkServiceImplTest {
     mockInfluenceConfig();
 
     TedTalkRequest request = request("Test Talk", "John Doe", 2020, 1);
-    TedTalkEntity entity = entity("Test Talk");
+    TedTalk entity = entity("Test Talk");
 
-    when(repository.save(any(TedTalkEntity.class))).thenReturn(entity);
+    when(repository.save(any(TedTalk.class))).thenReturn(entity);
 
     TedTalkResponse response = service.createTalk(request);
 
     assertEquals("Test Talk", response.title());
-    verify(repository).save(any(TedTalkEntity.class));
+    verify(repository).save(any(TedTalk.class));
   }
 
   @Test
@@ -92,9 +90,10 @@ final class TedTalkServiceImplTest {
     mockInfluenceConfig();
 
     TedTalkRequest request = request("Updated Talk", "Jane Doe", 2021, 5);
-    TedTalkEntity entity = entity("Old Talk");
+    TedTalk entity = entity("Old Talk");
 
     when(repository.findById(1L)).thenReturn(Optional.of(entity));
+    when(repository.save(any(TedTalk.class))).thenReturn(entity);
 
     TedTalkResponse response = service.updateTalk(1L, request);
 
@@ -102,7 +101,7 @@ final class TedTalkServiceImplTest {
     assertEquals("Updated Talk", response.title());
 
     verify(repository).findById(1L);
-    verify(repository, never()).save(any());
+    verify(repository).save(any(TedTalk.class));
   }
 
   @Test
@@ -152,7 +151,7 @@ final class TedTalkServiceImplTest {
   void getTalks_shouldReturnPagedResponse() {
     mockInfluenceConfig();
 
-    Page<TedTalkEntity> page = new PageImpl<>(List.of(entity("Test Talk")));
+    PagedResponse<TedTalk> page = new PagedResponse<>(List.of(entity("Test Talk")), 0, 10, 1, 1);
 
     when(repository.findByFilters(any(), any(), any(), any(PageRequest.class))).thenReturn(page);
 

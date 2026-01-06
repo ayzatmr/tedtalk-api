@@ -1,7 +1,7 @@
 package com.io.tedtalks.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.io.tedtalks.entity.TedTalkEntity;
+import com.io.tedtalks.model.TedTalk;
 import java.time.YearMonth;
 
 /** Represents a response containing the details of a TED Talk. */
@@ -23,28 +23,28 @@ public record TedTalkResponse(
    */
   public static TedTalkResponse fromDto(InfluentialTalkDto dto) {
     return new TedTalkResponse(
-        dto.getId(),
-        dto.getTitle(),
-        dto.getAuthor(),
-        YearMonth.of(dto.getYearValue(), dto.getMonthValue()),
-        dto.getViews(),
-        dto.getLikes(),
-        dto.getLink(),
-        dto.getInfluence());
+        dto.id(),
+        dto.title(),
+        dto.author(),
+        YearMonth.of(dto.yearValue(), dto.monthValue()),
+        dto.views(),
+        dto.likes(),
+        dto.link(),
+        dto.influence());
   }
 
   /**
-   * Converts a {@link TedTalkEntity} instance into a {@link TedTalkResponse} instance and includes
-   * the calculated influence score.
+   * Converts a {@link TedTalk} entity into a {@link TedTalkResponse} instance, using specified weights
+   * to calculate the influence score.
    *
-   * @param entity the {@code TedTalkEntity} to be converted. Must not be null.
-   * @param viewsWeight the weight assigned to the view count for calculating the influence score.
-   * @param likesWeight the weight assigned to the like count for calculating the influence score.
-   * @return a {@code TedTalkResponse} instance containing the data from the given entity and the
-   *     specified influence score.
+   * @param entity the {@code TedTalk} entity to be converted. Must not be null.
+   * @param viewsWeight the weight to apply to the views count when calculating the influence score.
+   * @param likesWeight the weight to apply to the likes count when calculating the influence score.
+   * @return a {@code TedTalkResponse} instance containing the data from the given entity,
+   *         including the calculated influence score.
    */
   public static TedTalkResponse fromEntity(
-      TedTalkEntity entity, double viewsWeight, double likesWeight) {
+      TedTalk entity, double viewsWeight, double likesWeight) {
     return new TedTalkResponse(
         entity.getId(),
         entity.getTitle(),
